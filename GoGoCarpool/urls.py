@@ -16,7 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from trips.api import PingAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/ping/', PingAPIView.as_view()),
+
 ]
