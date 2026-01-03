@@ -16,10 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from trips.api import PingAPIView
+from trips.api import PingAPIView, TripListAPIView, TripDetailAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/ping/', PingAPIView.as_view()),
+    path('api/trips/', TripListAPIView.as_view()),
+    path('api/trips/<int:pk>/', TripDetailAPIView.as_view()),
 
 ]
