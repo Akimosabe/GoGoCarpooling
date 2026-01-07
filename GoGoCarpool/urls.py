@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from trips.api import PingAPIView, TripListAPIView, TripDetailAPIView
+from carpooling.api import PingAPIView, TripListAPIView, TripDetailAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
