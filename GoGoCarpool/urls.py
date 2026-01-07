@@ -20,8 +20,8 @@ from carpooling.views import PingAPIView, TripListAPIView, TripDetailAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('/ping/', PingAPIView.as_view()),
-    path('/trips/', TripListAPIView.as_view()),
-    path('/trips/<int:pk>/', TripDetailAPIView.as_view()),
+    path('ping/', PingAPIView.as_view()),
+    path('trips/', TripListAPIView.as_view()),
+    path('trips/<int:pk>/', TripDetailAPIView.as_view()),
 
 ]
