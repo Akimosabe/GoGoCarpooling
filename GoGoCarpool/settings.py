@@ -115,6 +115,22 @@ USE_I18N = True
 USE_TZ = True
 
 
+# Email settings (Yandex SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'sabenoreplay@yandex.com'
+EMAIL_HOST_PASSWORD = 'gahvwrazzxtxwcmz'
+DEFAULT_FROM_EMAIL = 'sabenoreplay@yandex.com'
+SERVER_EMAIL = 'sabenoreplay@yandex.com'
+
+
+# Dadata API settings
+DADATA_API_KEY = ''  # Нужно получить на https://dadata.ru/
+DADATA_SECRET_KEY = ''  # Нужно получить на https://dadata.ru/
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 

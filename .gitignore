@@ -17,9 +17,5 @@ db.sqlite3
 .DS_Store
 Thumbs.db
 
-# Instructions
-SETUP_INSTRUCTIONS.md
-QUICKSTART.md
-PROJECT_SUMMARY.md
-START_HERE.txt
-README.md
+# Documentation
+docs/

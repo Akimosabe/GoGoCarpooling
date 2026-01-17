@@ -28,6 +28,8 @@ from carpooling.views import (
     login,
     logout,
     current_user,
+    password_reset_request,
+    password_reset_confirm,
     
     # Профили
     user_profile,
@@ -37,6 +39,7 @@ from carpooling.views import (
     
     # Города
     city_list,
+    city_autocomplete,
     
     # Поездки
     trip_list,
@@ -72,6 +75,8 @@ urlpatterns = [
     path('api/auth/login/', login, name='login'),
     path('api/auth/logout/', logout, name='logout'),
     path('api/auth/me/', current_user, name='current-user'),
+    path('api/auth/password-reset/', password_reset_request, name='password-reset-request'),
+    path('api/auth/password-reset/<str:uidb64>/<str:token>/', password_reset_confirm, name='password-reset-confirm'),
     
     # ============ Профили пользователей ============
     path('api/users/<int:user_id>/profile/', user_profile, name='user-profile'),
@@ -83,6 +88,7 @@ urlpatterns = [
     
     # ============ Города ============
     path('api/cities/', city_list, name='city-list'),
+    path('api/cities/autocomplete/', city_autocomplete, name='city-autocomplete'),
     
     # ============ Поездки ============
     path('api/trips/', trip_list, name='trip-list'),
