@@ -55,4 +55,8 @@ urlpatterns = [
     path('bookings/<int:booking_id>/cancel/', cancel_booking, name='cancel-booking'),  # Отмена бронирования
     path('my-bookings/', user_bookings, name='user-bookings'),  # Список бронирований пользователя
     path('trips/<int:trip_id>/bookings/', trip_bookings, name='trip-bookings'),  # Список бронирований для поездки (для водителя)
+
+    #Алдминка
+    path('admin/', admin.site.urls),
+
 ]
