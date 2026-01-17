@@ -16,47 +16,102 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+
 from carpooling.views import (
-    ping,  # Пинг для теста API
-    trip_list,  # Список активных поездок (функция с декоратором @api_view)
-    trip_detail,  # Детали конкретной поездки по id (функция с декоратором @api_view)
-    create_trip,  # Создание новой поездки
-    edit_trip,  # Редактирование существующей поездки
-    cancel_trip,  # Отмена поездки
-    book_seat,  # Бронирование места в поездке
-    cancel_booking,  # Отмена бронирования пассажиром или водителем
-    user_bookings,  # Список бронирований текущего пользователя
-    trip_bookings,  # Список бронирований для конкретной поездки (для водителя)
-    register,  # Регистрация пользователя
-    login,  # Вход пользователя
-    logout,  # Выход пользователя
-    current_user,  # Информация о текущем пользователе
+    # Утилиты
+    ping,
+    
+    # Аутентификация
+    register,
+    login,
+    logout,
+    current_user,
+    
+    # Профили
+    user_profile,
+    update_profile,
+    car_list_create,
+    car_detail,
+    
+    # Города
+    city_list,
+    
+    # Поездки
+    trip_list,
+    trip_detail,
+    create_trip,
+    edit_trip,
+    cancel_trip,
+    my_trips,
+    
+    # Бронирования
+    book_seat,
+    cancel_booking,
+    reject_booking,
+    user_bookings,
+    trip_bookings,
+    
+    # Рейтинги
+    create_rating,
+    user_ratings,
+    
+    # Уведомления
+    notifications_list,
+    mark_notification_read,
+    mark_all_notifications_read,
 )
 
 urlpatterns = [
-    # Пинг для теста API
-    path('ping/', ping, name='ping'),    # Пинг для теста API
+    # ============ Утилиты ============
+    path('api/ping/', ping, name='ping'),
     
-    # Аутентификация
-    path('auth/register/', register, name='register'),  # Регистрация пользователя
-    path('auth/login/', login, name='login'),  # Вход пользователя
-    path('auth/logout/', logout, name='logout'),  # Выход пользователя
-    path('auth/me/', current_user, name='current-user'),  # Информация о текущем пользователе
-
-    # Поездки
-    path('trips/', trip_list, name='trip-list'),  # Список активных поездок
-    path('trips/<int:pk>/', trip_detail, name='trip-detail'),  # Детали поездки по id
-    path('trips/create/', create_trip, name='create-trip'),  # Создание новой поездки
-    path('trips/<int:pk>/edit/', edit_trip, name='edit-trip'),  # Редактирование поездки
-    path('trips/<int:pk>/cancel/', cancel_trip, name='cancel-trip'),  # Отмена поездки
-
-    # Бронирования
-    path('trips/<int:trip_id>/book/', book_seat, name='book-seat'),  # Бронирование места
-    path('bookings/<int:booking_id>/cancel/', cancel_booking, name='cancel-booking'),  # Отмена бронирования
-    path('my-bookings/', user_bookings, name='user-bookings'),  # Список бронирований пользователя
-    path('trips/<int:trip_id>/bookings/', trip_bookings, name='trip-bookings'),  # Список бронирований для поездки (для водителя)
-
-    #Алдминка
+    # ============ Аутентификация ============
+    path('api/auth/register/', register, name='register'),
+    path('api/auth/login/', login, name='login'),
+    path('api/auth/logout/', logout, name='logout'),
+    path('api/auth/me/', current_user, name='current-user'),
+    
+    # ============ Профили пользователей ============
+    path('api/users/<int:user_id>/profile/', user_profile, name='user-profile'),
+    path('api/profile/update/', update_profile, name='update-profile'),
+    
+    # ============ Управление автомобилями ============
+    path('api/cars/', car_list_create, name='car-list-create'),
+    path('api/cars/<int:car_id>/', car_detail, name='car-detail'),
+    
+    # ============ Города ============
+    path('api/cities/', city_list, name='city-list'),
+    
+    # ============ Поездки ============
+    path('api/trips/', trip_list, name='trip-list'),
+    path('api/trips/<int:trip_id>/', trip_detail, name='trip-detail'),
+    path('api/trips/create/', create_trip, name='create-trip'),
+    path('api/trips/<int:trip_id>/edit/', edit_trip, name='edit-trip'),
+    path('api/trips/<int:trip_id>/cancel/', cancel_trip, name='cancel-trip'),
+    path('api/my-trips/', my_trips, name='my-trips'),
+    
+    # ============ Бронирования ============
+    path('api/trips/<int:trip_id>/book/', book_seat, name='book-seat'),
+    path('api/bookings/<int:booking_id>/cancel/', cancel_booking, name='cancel-booking'),
+    path('api/bookings/<int:booking_id>/reject/', reject_booking, name='reject-booking'),
+    path('api/my-bookings/', user_bookings, name='user-bookings'),
+    path('api/trips/<int:trip_id>/bookings/', trip_bookings, name='trip-bookings'),
+    
+    # ============ Рейтинги ============
+    path('api/ratings/create/', create_rating, name='create-rating'),
+    path('api/users/<int:user_id>/ratings/', user_ratings, name='user-ratings'),
+    
+    # ============ Уведомления ============
+    path('api/notifications/', notifications_list, name='notifications-list'),
+    path('api/notifications/<int:notification_id>/read/', mark_notification_read, name='mark-notification-read'),
+    path('api/notifications/read-all/', mark_all_notifications_read, name='mark-all-notifications-read'),
+    
+    # ============ Админка ============
     path('admin/', admin.site.urls),
-
 ]
+
+# Для загрузки медиа файлов в режиме разработки
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
