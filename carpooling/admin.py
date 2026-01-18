@@ -45,6 +45,7 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ['is_staff', 'is_superuser', 'is_active', 'created_at']
     search_fields = ['id', 'email', 'first_name', 'phone']
     ordering = ['-created_at']
+    list_per_page = 25
     
     inlines = [CarInline]
     
@@ -237,6 +238,7 @@ class TripAdmin(admin.ModelAdmin):
     date_hierarchy = 'departure_datetime'
     ordering = ['-departure_datetime']
     autocomplete_fields = ['driver', 'car', 'origin', 'destination']
+    list_per_page = 25
     
     fieldsets = (
         ('Основная информация', {
@@ -268,6 +270,7 @@ class BookingAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     date_hierarchy = 'created_at'
     autocomplete_fields = ['trip', 'passenger']
+    list_per_page = 25
     
     fieldsets = (
         ('Информация о бронировании', {
@@ -291,6 +294,7 @@ class RatingAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at']
     date_hierarchy = 'created_at'
     autocomplete_fields = ['trip', 'from_user', 'to_user']
+    list_per_page = 25
 
 
 @admin.register(City)
@@ -299,6 +303,7 @@ class CityAdmin(admin.ModelAdmin):
     search_fields = ['name', 'region']
     list_filter = ['is_popular', 'country']
     ordering = ['-population', 'name']
+    list_per_page = 50  # Городов много, показываем больше
 
 
 @admin.register(Notification)
@@ -309,6 +314,7 @@ class NotificationAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at']
     date_hierarchy = 'created_at'
     autocomplete_fields = ['user', 'trip', 'booking']
+    list_per_page = 50  # Уведомлений много
     
     actions = ['mark_as_read', 'mark_as_unread']
     
