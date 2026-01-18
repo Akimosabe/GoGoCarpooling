@@ -2,9 +2,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.contrib.auth.models import User
 
-from carpooling.models import UserProfile, Car
+from carpooling.models import User, Car
 from carpooling.serializers import (
     UserDetailSerializer, UserProfileSerializer, CarSerializer
 )
@@ -16,7 +15,7 @@ def user_profile(request, user_id):
     """Получение профиля пользователя"""
     try:
         user = User.objects.get(id=user_id)
-        serializer = UserDetailSerializer(user)
+        serializer = UserDetailSerializer(user, context={'request': request})
         return Response(serializer.data)
     except User.DoesNotExist:
         return Response({"message": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
@@ -26,13 +25,12 @@ def user_profile(request, user_id):
 @permission_classes([IsAuthenticated])
 def update_profile(request):
     """Обновление профиля текущего пользователя"""
-    try:
-        profile = request.user.profile
-    except UserProfile.DoesNotExist:
-        # Если профиль не существует, создаем его
-        profile = UserProfile.objects.create(user=request.user)
-    
-    serializer = UserProfileSerializer(profile, data=request.data, partial=True)
+    serializer = UserProfileSerializer(
+        request.user, 
+        data=request.data, 
+        partial=True,
+        context={'request': request}
+    )
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)

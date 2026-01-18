@@ -38,8 +38,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    'carpooling',
+    'carpooling.apps.CarpoolingConfig',
 ]
+
+# Кастомная модель пользователя
+AUTH_USER_MODEL = 'carpooling.User'
 
 # добавлены рест, трипс
 
@@ -112,7 +115,27 @@ TIME_ZONE = "Europe/Moscow"
 
 USE_I18N = True
 
+USE_L10N = False  # Отключаем локализацию для использования кастомных форматов
+
 USE_TZ = True
+
+# Формат даты и времени для РФ (дд.мм.гггг)
+DATE_FORMAT = 'd.m.Y'
+DATETIME_FORMAT = 'd.m.Y H:i'
+SHORT_DATE_FORMAT = 'd.m.Y'
+SHORT_DATETIME_FORMAT = 'd.m.Y H:i'
+DATE_INPUT_FORMATS = [
+    '%d.%m.%Y',  # 18.01.2026
+    '%d.%m.%y',  # 18.01.26
+    '%Y-%m-%d',  # 2026-01-18 (ISO формат для совместимости)
+]
+DATETIME_INPUT_FORMATS = [
+    '%d.%m.%Y %H:%M',     # 18.01.2026 14:30
+    '%d.%m.%Y %H:%M:%S',  # 18.01.2026 14:30:00
+    '%d.%m.%y %H:%M',     # 18.01.26 14:30
+    '%Y-%m-%d %H:%M',     # 2026-01-18 14:30 (ISO формат для совместимости)
+    '%Y-%m-%d %H:%M:%S',  # 2026-01-18 14:30:00
+]
 
 
 # Email settings (Yandex SMTP)
@@ -126,9 +149,9 @@ DEFAULT_FROM_EMAIL = 'sabenoreplay@yandex.com'
 SERVER_EMAIL = 'sabenoreplay@yandex.com'
 
 
-# Dadata API settings
-DADATA_API_KEY = ''  # Нужно получить на https://dadata.ru/
-DADATA_SECRET_KEY = ''  # Нужно получить на https://dadata.ru/
+# GeoNames - бесплатная база городов
+# Данные импортируются командой: python manage.py import_geonames
+# Документация: https://download.geonames.org/export/dump/
 
 
 # Static files (CSS, JavaScript, Images)
@@ -157,6 +180,8 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
-    "DATETIME_FORMAT": "%Y-%m-%d %H:%M",
-    "DATE_FORMAT": "%Y-%m-%d",
+    "DATETIME_FORMAT": "%d.%m.%Y %H:%M",
+    "DATE_FORMAT": "%d.%m.%Y",
+    "DATETIME_INPUT_FORMATS": ["%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"],
+    "DATE_INPUT_FORMATS": ["%d.%m.%Y", "%Y-%m-%d"],
 }

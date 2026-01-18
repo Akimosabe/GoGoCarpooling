@@ -28,9 +28,9 @@ class Rating(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"Rating {self.rating}/5: {self.from_user} → {self.to_user}"
+        return f"Оценка {self.rating}/5: {self.from_user} → {self.to_user}"
     
     class Meta:
-        verbose_name = "Рейтинг"
-        verbose_name_plural = "Рейтинги"
+        verbose_name = "Оценка"
+        verbose_name_plural = "4. Оценки"
         unique_together = ['trip', 'from_user', 'to_user']

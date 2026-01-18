@@ -3,13 +3,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
-from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
 
+from carpooling.models import User
 from carpooling.serializers import (
     RegisterSerializer, LoginSerializer,
     UserSerializer, UserDetailSerializer
@@ -36,10 +36,11 @@ def login(request):
     """Вход пользователя"""
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
-        username = serializer.validated_data['username']
+        email = serializer.validated_data['email']
         password = serializer.validated_data['password']
         
-        user = authenticate(request, username=username, password=password)
+        # Аутентификация по email
+        user = authenticate(request, email=email, password=password)
         
         if user is not None:
             auth_login(request, user)
@@ -49,7 +50,7 @@ def login(request):
             }, status=status.HTTP_200_OK)
         else:
             return Response({
-                "message": "Неверное имя пользователя или пароль"
+                "message": "Неверный email или пароль"
             }, status=status.HTTP_401_UNAUTHORIZED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -101,7 +102,7 @@ def password_reset_request(request):
     # Отправка email
     subject = "Восстановление пароля GoGoCarpool"
     message = f"""
-Здравствуйте, {user.first_name or user.username}!
+Здравствуйте, {user.first_name or user.email}!
 
 Вы запросили восстановление пароля для вашего аккаунта в GoGoCarpool.
 
@@ -177,6 +178,6 @@ def password_reset_confirm(request, uidb64, token):
         )
     
     user.set_password(new_password)
-    user.save()
+    user.save(update_fields=['password'])
     
     return Response({"message": "Пароль успешно изменен"})

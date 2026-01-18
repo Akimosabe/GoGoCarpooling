@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from carpooling.models import UserProfile
+from carpooling.models import User
+import re
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -8,16 +8,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True, min_length=8)
     
-    # Обязательные поля профиля
-    phone = serializers.CharField(required=True, min_length=10, max_length=20)
-    
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password_confirm', 'phone']
+        fields = ['email', 'first_name', 'phone', 'password', 'password_confirm']
         extra_kwargs = {
             'email': {'required': True},
             'first_name': {'required': True},
-            'last_name': {'required': True},
+            'phone': {'required': True},
         }
     
     def validate_email(self, value):
@@ -28,7 +25,6 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def validate_phone(self, value):
         """Валидация номера телефона (российский формат)"""
-        import re
         # Убираем все символы кроме цифр и +
         phone_clean = re.sub(r'[^\d+]', '', value)
         
@@ -39,7 +35,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         
         # Проверка уникальности телефона
-        if UserProfile.objects.filter(phone=phone_clean).exists():
+        if User.objects.filter(phone=phone_clean).exists():
             raise serializers.ValidationError("Пользователь с таким номером телефона уже зарегистрирован")
         
         return phone_clean
@@ -51,25 +47,20 @@ class RegisterSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        """Создание пользователя с профилем"""
+        """Создание пользователя"""
         validated_data.pop('password_confirm')
-        phone = validated_data.pop('phone', None)
         
         user = User.objects.create_user(
-            username=validated_data['username'],
             email=validated_data['email'],
+            phone=validated_data['phone'],
             first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
             password=validated_data['password']
         )
-        
-        # Создание профиля
-        UserProfile.objects.create(user=user, phone=phone)
         
         return user
 
 
 class LoginSerializer(serializers.Serializer):
     """Сериализатор для входа"""
-    username = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True)

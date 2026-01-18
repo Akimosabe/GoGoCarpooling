@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db import transaction
+from django.utils import timezone
 from datetime import datetime
 
-from carpooling.models import Trip, UserProfile, Notification
+from carpooling.models import Trip, User, Notification
 from carpooling.serializers import (
     TripListSerializer, TripDetailSerializer, TripCreateUpdateSerializer
 )
@@ -16,26 +17,50 @@ from .utils import create_notification
 @permission_classes([AllowAny])
 def trip_list(request):
     """Получение списка активных поездок с фильтрацией"""
-    trips = Trip.objects.filter(status=Trip.STATUS_ACTIVE).select_related('driver', 'car')
+    # Фильтруем только активные поездки с датой в будущем
+    trips = Trip.objects.filter(
+        status=Trip.STATUS_ACTIVE,
+        departure_datetime__gte=timezone.now()
+    ).select_related('driver', 'car', 'origin', 'destination')
     
     # Фильтры
-    origin = request.query_params.get('origin')
-    destination = request.query_params.get('destination')
+    origin = request.query_params.get('origin')  # Название города или ID
+    origin_id = request.query_params.get('origin_id')  # ID города
+    destination = request.query_params.get('destination')  # Название города или ID
+    destination_id = request.query_params.get('destination_id')  # ID города
     date = request.query_params.get('date')
     min_seats = request.query_params.get('min_seats')
     max_price = request.query_params.get('max_price')
     
-    if origin:
-        trips = trips.filter(origin__icontains=origin)
+    # Фильтрация по городу отправления
+    if origin_id:
+        try:
+            trips = trips.filter(origin_id=int(origin_id))
+        except ValueError:
+            pass
+    elif origin:
+        trips = trips.filter(origin__name__icontains=origin)
     
-    if destination:
-        trips = trips.filter(destination__icontains=destination)
+    # Фильтрация по городу назначения
+    if destination_id:
+        try:
+            trips = trips.filter(destination_id=int(destination_id))
+        except ValueError:
+            pass
+    elif destination:
+        trips = trips.filter(destination__name__icontains=destination)
     
     if date:
         try:
-            date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-            trips = trips.filter(departure_datetime__date=date_obj)
-        except ValueError:
+            # Поддержка обоих форматов даты
+            for fmt in ('%d.%m.%Y', '%Y-%m-%d'):
+                try:
+                    date_obj = datetime.strptime(date, fmt).date()
+                    trips = trips.filter(departure_datetime__date=date_obj)
+                    break
+                except ValueError:
+                    continue
+        except Exception:
             pass
     
     if min_seats:
@@ -62,7 +87,7 @@ def trip_list(request):
 def trip_detail(request, trip_id):
     """Получение детальной информации о поездке"""
     try:
-        trip = Trip.objects.select_related('driver', 'car').get(id=trip_id)
+        trip = Trip.objects.select_related('driver', 'car', 'origin', 'destination').get(id=trip_id)
         serializer = TripDetailSerializer(trip)
         return Response(serializer.data)
     except Trip.DoesNotExist:
@@ -78,9 +103,8 @@ def create_trip(request):
         trip = serializer.save()
         
         # Увеличиваем счетчик поездок водителя
-        profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        profile.trips_as_driver += 1
-        profile.save()
+        request.user.trips_as_driver += 1
+        request.user.save(update_fields=['trips_as_driver'])
         
         return Response(TripDetailSerializer(trip).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -115,7 +139,7 @@ def edit_trip(request, trip_id):
                 user=booking.passenger,
                 notification_type=Notification.TYPE_TRIP_UPDATED,
                 title="Поездка обновлена",
-                message=f"Поездка {trip.origin} → {trip.destination} была обновлена",
+                message=f"Поездка {trip.origin.name} → {trip.destination.name} была обновлена",
                 trip=trip
             )
         
@@ -152,7 +176,7 @@ def cancel_trip(request, trip_id):
                 user=booking.passenger,
                 notification_type=Notification.TYPE_TRIP_CANCELLED,
                 title="Поездка отменена",
-                message=f"Поездка {trip.origin} → {trip.destination} была отменена водителем",
+                message=f"Поездка {trip.origin.name} → {trip.destination.name} была отменена водителем",
                 trip=trip,
                 booking=booking
             )
@@ -164,6 +188,14 @@ def cancel_trip(request, trip_id):
 @permission_classes([IsAuthenticated])
 def my_trips(request):
     """Получение поездок текущего пользователя как водителя"""
-    trips = Trip.objects.filter(driver=request.user).select_related('car')
+    trips = Trip.objects.filter(driver=request.user).select_related('car', 'origin', 'destination')
+    
+    # Автоматически завершаем просроченные поездки
+    for trip in trips:
+        trip.check_and_complete_if_expired()
+    
+    # Перезагружаем после возможных изменений
+    trips = Trip.objects.filter(driver=request.user).select_related('car', 'origin', 'destination')
+    
     serializer = TripListSerializer(trips, many=True)
     return Response(serializer.data)

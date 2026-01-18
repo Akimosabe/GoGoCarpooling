@@ -39,9 +39,9 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.title} для {self.user.username}"
+        return f"{self.title} для {self.user}"
     
     class Meta:
         verbose_name = "Уведомление"
-        verbose_name_plural = "Уведомления"
+        verbose_name_plural = "6. Уведомления"
         ordering = ['-created_at']

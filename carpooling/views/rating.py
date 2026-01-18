@@ -2,9 +2,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.contrib.auth.models import User
 
-from carpooling.models import Rating, Booking
+from carpooling.models import User, Rating, Booking
 from carpooling.serializers import RatingSerializer, RatingCreateSerializer
 
 
@@ -68,7 +67,7 @@ def user_ratings(request, user_id):
     serializer = RatingSerializer(ratings, many=True)
     
     return Response({
-        "average_rating": user.profile.average_rating if hasattr(user, 'profile') else 0,
+        "average_rating": user.average_rating,
         "total_count": ratings.count(),
         "ratings": serializer.data
     })

@@ -38,9 +38,9 @@ class Booking(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Booking #{self.id} – {self.passenger.username} ({self.trip})"
+        return f"Бронирование #{self.id} – {self.passenger} ({self.trip})"
     
     class Meta:
         verbose_name = "Бронирование"
-        verbose_name_plural = "Бронирования"
+        verbose_name_plural = "3. Бронирования"
         unique_together = ['trip', 'passenger']  # Один пассажир = одно бронирование на поездку

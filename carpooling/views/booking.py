@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 
-from carpooling.models import Trip, Booking, UserProfile, Notification
+from carpooling.models import Trip, Booking, User, Notification
 from carpooling.serializers import (
     BookingListSerializer, BookingDetailSerializer, BookingCreateSerializer
 )
@@ -16,7 +16,7 @@ from .utils import create_notification
 def book_seat(request, trip_id):
     """Бронирование места в поездке"""
     try:
-        trip = Trip.objects.get(id=trip_id)
+        trip = Trip.objects.select_related('origin', 'destination').get(id=trip_id)
     except Trip.DoesNotExist:
         return Response({"message": "Поездка не найдена"}, status=status.HTTP_404_NOT_FOUND)
     
@@ -66,16 +66,15 @@ def book_seat(request, trip_id):
             trip.save()
             
             # Увеличиваем счетчик поездок пассажира
-            profile, _ = UserProfile.objects.get_or_create(user=request.user)
-            profile.trips_as_passenger += 1
-            profile.save()
+            request.user.trips_as_passenger += 1
+            request.user.save(update_fields=['trips_as_passenger'])
             
             # Уведомляем водителя о новом бронировании
             create_notification(
                 user=trip.driver,
                 notification_type=Notification.TYPE_BOOKING_NEW,
                 title="Новое бронирование",
-                message=f"{request.user.get_full_name() or request.user.username} забронировал {seats_count} мест в поездке {trip.origin} → {trip.destination}",
+                message=f"{request.user.first_name or request.user.email} забронировал {seats_count} мест в поездке {trip.origin.name} → {trip.destination.name}",
                 trip=trip,
                 booking=booking
             )
@@ -90,7 +89,7 @@ def book_seat(request, trip_id):
 def cancel_booking(request, booking_id):
     """Отмена бронирования пассажиром"""
     try:
-        booking = Booking.objects.select_related('trip').get(
+        booking = Booking.objects.select_related('trip', 'trip__origin', 'trip__destination').get(
             id=booking_id, 
             passenger=request.user
         )
@@ -118,7 +117,7 @@ def cancel_booking(request, booking_id):
             user=booking.trip.driver,
             notification_type=Notification.TYPE_BOOKING_CANCELLED,
             title="Бронирование отменено",
-            message=f"{request.user.get_full_name() or request.user.username} отменил бронирование в поездке {booking.trip.origin} → {booking.trip.destination}",
+            message=f"{request.user.first_name or request.user.email} отменил бронирование в поездке {booking.trip.origin.name} → {booking.trip.destination.name}",
             trip=booking.trip,
             booking=booking
         )
@@ -131,7 +130,7 @@ def cancel_booking(request, booking_id):
 def reject_booking(request, booking_id):
     """Отклонение бронирования водителем"""
     try:
-        booking = Booking.objects.select_related('trip').get(id=booking_id)
+        booking = Booking.objects.select_related('trip', 'trip__origin', 'trip__destination').get(id=booking_id)
     except Booking.DoesNotExist:
         return Response({
             "message": "Бронирование не найдено"
@@ -164,7 +163,7 @@ def reject_booking(request, booking_id):
             user=booking.passenger,
             notification_type=Notification.TYPE_BOOKING_REJECTED,
             title="Бронирование отклонено",
-            message=f"Ваше бронирование в поездке {booking.trip.origin} → {booking.trip.destination} было отклонено водителем",
+            message=f"Ваше бронирование в поездке {booking.trip.origin.name} → {booking.trip.destination.name} было отклонено водителем",
             trip=booking.trip,
             booking=booking
         )
