@@ -17,7 +17,8 @@ from .booking import (
 )
 from .rating import create_rating, user_ratings
 from .notification import (
-    notifications_list, mark_notification_read,
+    notifications_list, notifications_realtime,
+    clear_realtime_notifications, mark_notification_read,
     mark_all_notifications_read
 )
 from .ping import ping
@@ -41,7 +42,8 @@ __all__ = [
     # Rating views
     'create_rating', 'user_ratings',
     # Notification views
-    'notifications_list', 'mark_notification_read',
+    'notifications_list', 'notifications_realtime',
+    'clear_realtime_notifications', 'mark_notification_read',
     'mark_all_notifications_read',
     # Ping view
     'ping',

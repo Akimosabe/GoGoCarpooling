@@ -8,6 +8,7 @@ from carpooling.models import Trip, Booking, User, Notification
 from carpooling.serializers import (
     BookingListSerializer, BookingDetailSerializer, BookingCreateSerializer
 )
+from carpooling.pagination import paginate_queryset
 from .utils import create_notification
 
 
@@ -178,10 +179,9 @@ def user_bookings(request):
     """Получение всех бронирований текущего пользователя"""
     bookings = Booking.objects.filter(
         passenger=request.user
-    ).select_related('trip', 'trip__driver').order_by('-created_at')
+    ).select_related('trip', 'trip__driver', 'trip__origin', 'trip__destination').order_by('-created_at')
     
-    serializer = BookingListSerializer(bookings, many=True)
-    return Response(serializer.data)
+    return paginate_queryset(request, bookings, BookingListSerializer)
 
 
 @api_view(['GET'])
@@ -200,5 +200,4 @@ def trip_bookings(request, trip_id):
         }, status=status.HTTP_403_FORBIDDEN)
     
     bookings = trip.bookings.select_related('passenger').order_by('-created_at')
-    serializer = BookingListSerializer(bookings, many=True)
-    return Response(serializer.data)
+    return paginate_queryset(request, bookings, BookingListSerializer)

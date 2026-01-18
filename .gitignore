@@ -20,3 +20,7 @@ Thumbs.db
 # Documentation
 docs/
 .cursor/
+
+# Environment variables (secrets)
+.env
+!.env.example

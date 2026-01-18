@@ -6,10 +6,9 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.core.mail import send_mail
-from django.conf import settings
 
 from carpooling.models import User
+from carpooling.tasks import send_password_reset_email
 from carpooling.serializers import (
     RegisterSerializer, LoginSerializer,
     UserSerializer, UserDetailSerializer
@@ -99,38 +98,12 @@ def password_reset_request(request):
     # Формирование ссылки для восстановления (для фронтенда)
     reset_link = f"http://localhost:3000/password-reset/{uid}/{token}/"
     
-    # Отправка email
-    subject = "Восстановление пароля GoGoCarpool"
-    message = f"""
-Здравствуйте, {user.first_name or user.email}!
-
-Вы запросили восстановление пароля для вашего аккаунта в GoGoCarpool.
-
-Для сброса пароля перейдите по ссылке:
-{reset_link}
-
-Если вы не запрашивали восстановление пароля, просто проигнорируйте это письмо.
-
-Ссылка действительна в течение 24 часов.
-
---
-С уважением,
-Команда GoGoCarpool
-    """
-    
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
-    except Exception as e:
-        return Response(
-            {"message": f"Ошибка отправки email: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+    # Асинхронная отправка email через Celery
+    send_password_reset_email.delay(
+        user_email=user.email,
+        user_name=user.first_name or user.email,
+        reset_link=reset_link
+    )
     
     return Response({
         "message": "Если пользователь с таким email существует, на него отправлена ссылка для восстановления пароля"

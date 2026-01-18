@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-g$cwk9qb1)1l&!ar^_+5cy72@4-@$jj@2*+0nw054k__^@w4+4"
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-g$cwk9qb1)1l&!ar^_+5cy72@4-@$jj@2*+0nw054k__^@w4+4')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 
 
 # Application definition
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "rest_framework",
     'carpooling.apps.CarpoolingConfig',
 ]
@@ -49,6 +51,7 @@ AUTH_USER_MODEL = 'carpooling.User'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -140,13 +143,13 @@ DATETIME_INPUT_FORMATS = [
 
 # Email settings (Yandex SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.yandex.ru'
-EMAIL_PORT = 587
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.yandex.ru')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'sabenoreplay@yandex.com'
-EMAIL_HOST_PASSWORD = 'gahvwrazzxtxwcmz'
-DEFAULT_FROM_EMAIL = 'sabenoreplay@yandex.com'
-SERVER_EMAIL = 'sabenoreplay@yandex.com'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'sabenoreplay@yandex.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', 'sabenoreplay@yandex.com')
+SERVER_EMAIL = os.environ.get('EMAIL_HOST_USER', 'sabenoreplay@yandex.com')
 
 
 # GeoNames - бесплатная база городов
@@ -185,3 +188,24 @@ REST_FRAMEWORK = {
     "DATETIME_INPUT_FORMATS": ["%d.%m.%Y %H:%M", "%d.%m.%Y %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"],
     "DATE_INPUT_FORMATS": ["%d.%m.%Y", "%Y-%m-%d"],
 }
+
+
+# Celery settings (Redis)
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 минут максимум на задачу
+
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",      # React dev server
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",      # Vite dev server
+    "http://127.0.0.1:5173",
+]
+CORS_ALLOW_CREDENTIALS = True  # Для передачи cookies (сессии)

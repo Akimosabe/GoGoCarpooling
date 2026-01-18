@@ -10,6 +10,7 @@ from carpooling.models import Trip, User, Notification
 from carpooling.serializers import (
     TripListSerializer, TripDetailSerializer, TripCreateUpdateSerializer
 )
+from carpooling.pagination import paginate_queryset
 from .utils import create_notification
 
 
@@ -78,8 +79,7 @@ def trip_list(request):
     # Сортировка
     trips = trips.order_by('departure_datetime')
     
-    serializer = TripListSerializer(trips, many=True)
-    return Response(serializer.data)
+    return paginate_queryset(request, trips, TripListSerializer)
 
 
 @api_view(['GET'])
@@ -189,8 +189,9 @@ def my_trips(request):
     for trip in trips:
         trip.check_and_complete_if_expired()
     
-    # Перезагружаем после возможных изменений
-    trips = Trip.objects.filter(driver=request.user).select_related('car', 'origin', 'destination')
+    # Перезагружаем после возможных изменений и сортируем
+    trips = Trip.objects.filter(driver=request.user).select_related(
+        'car', 'origin', 'destination'
+    ).order_by('-departure_datetime')
     
-    serializer = TripListSerializer(trips, many=True)
-    return Response(serializer.data)
+    return paginate_queryset(request, trips, TripListSerializer)

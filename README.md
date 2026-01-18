@@ -4,20 +4,30 @@ Django REST API backend for a carpooling service.
 
 ## Tech Stack
 
-- Django 5.2
+- Python 3.12
+- Django 6.0
 - Django REST Framework
+- Celery + Redis (async tasks)
 - SQLite (development)
 
 ## Quick Start (Windows PowerShell)
 
+### Терминал 1 — Redis (если не запущен как служба)
 ```powershell
-# Перейти в папку проекта
-cd c:\Projects\GoGoCarpooling
+& "C:\Program Files\Redis\redis-server.exe"
+```
 
-# Активировать виртуальное окружение
+### Терминал 2 — Celery worker
+```powershell
+cd C:\Projects\GoGoCarpooling
 .\venv\Scripts\Activate.ps1
+celery -A GoGoCarpool worker -l info
+```
 
-# Запустить сервер
+### Терминал 3 — Django сервер
+```powershell
+cd C:\Projects\GoGoCarpooling
+.\venv\Scripts\Activate.ps1
 python manage.py runserver
 ```
 
@@ -34,6 +44,10 @@ py -3.12 -m venv venv
 
 # Установить зависимости
 pip install -r requirements.txt
+
+# Скопировать и настроить переменные окружения
+copy .env.example .env
+# Отредактировать .env — указать секреты
 
 # Применить миграции
 python manage.py migrate

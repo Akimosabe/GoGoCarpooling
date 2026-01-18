@@ -62,6 +62,8 @@ from carpooling.views import (
     
     # Уведомления
     notifications_list,
+    notifications_realtime,
+    clear_realtime_notifications,
     mark_notification_read,
     mark_all_notifications_read,
 )
@@ -111,6 +113,8 @@ urlpatterns = [
     
     # ============ Уведомления ============
     path('api/notifications/', notifications_list, name='notifications-list'),
+    path('api/notifications/realtime/', notifications_realtime, name='notifications-realtime'),
+    path('api/notifications/clear-realtime/', clear_realtime_notifications, name='clear-realtime-notifications'),
     path('api/notifications/<int:notification_id>/read/', mark_notification_read, name='mark-notification-read'),
     path('api/notifications/read-all/', mark_all_notifications_read, name='mark-all-notifications-read'),
     
