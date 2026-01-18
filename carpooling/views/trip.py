@@ -101,11 +101,6 @@ def create_trip(request):
     serializer = TripCreateUpdateSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         trip = serializer.save()
-        
-        # Увеличиваем счетчик поездок водителя
-        request.user.trips_as_driver += 1
-        request.user.save(update_fields=['trips_as_driver'])
-        
         return Response(TripDetailSerializer(trip).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

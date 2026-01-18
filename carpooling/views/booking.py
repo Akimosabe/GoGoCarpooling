@@ -47,14 +47,19 @@ def book_seat(request, trip_id):
     if serializer.is_valid():
         seats_count = serializer.validated_data['seats_count']
         
-        # Проверка доступности мест
-        if trip.available_seats < seats_count:
-            return Response({
-                "message": f"Недостаточно свободных мест. Доступно: {trip.available_seats}"
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Создание бронирования с уменьшением количества мест
+        # Создание бронирования с блокировкой для избежания race condition
         with transaction.atomic():
+            # Перечитываем trip с блокировкой строки в БД
+            trip = Trip.objects.select_for_update().select_related(
+                'origin', 'destination'
+            ).get(id=trip_id)
+            
+            # Проверка доступности мест (теперь внутри блокировки)
+            if trip.available_seats < seats_count:
+                return Response({
+                    "message": f"Недостаточно свободных мест. Доступно: {trip.available_seats}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             booking = serializer.save(
                 trip=trip,
                 passenger=request.user,
@@ -64,10 +69,6 @@ def book_seat(request, trip_id):
             # Уменьшаем доступные места
             trip.available_seats -= seats_count
             trip.save()
-            
-            # Увеличиваем счетчик поездок пассажира
-            request.user.trips_as_passenger += 1
-            request.user.save(update_fields=['trips_as_passenger'])
             
             # Уведомляем водителя о новом бронировании
             create_notification(

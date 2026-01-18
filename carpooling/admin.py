@@ -40,7 +40,7 @@ class UserAdmin(BaseUserAdmin):
     
     list_display = [
         'id', 'email', 'first_name', 'phone', 'is_staff', 
-        'trips_as_driver', 'trips_as_passenger', 'average_rating', 'created_at'
+        'get_trips_as_driver', 'get_trips_as_passenger', 'average_rating', 'created_at'
     ]
     list_filter = ['is_staff', 'is_superuser', 'is_active', 'created_at']
     search_fields = ['id', 'email', 'first_name', 'phone']
@@ -56,15 +56,15 @@ class UserAdmin(BaseUserAdmin):
         ('Личные данные', {
             'fields': ('first_name', 'phone', 'avatar', 'date_of_birth')
         }),
-        ('Статистика', {
-            'fields': ('trips_as_driver', 'trips_as_passenger', 'average_rating', 'total_ratings_count')
+        ('Статистика поездок', {
+            'fields': ('get_trips_as_driver', 'get_trips_as_passenger', 'user_trips_link', 'user_bookings_link'),
+        }),
+        ('Рейтинг', {
+            'fields': ('average_rating', 'total_ratings_count', 'user_ratings_link'),
         }),
         ('Права доступа', {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
             'classes': ('collapse',)
-        }),
-        ('Ссылки', {
-            'fields': ('user_trips_link', 'user_bookings_link', 'user_ratings_link'),
         }),
         ('Даты', {
             'fields': ('created_at', 'updated_at', 'last_login'),
@@ -82,9 +82,20 @@ class UserAdmin(BaseUserAdmin):
     
     readonly_fields = [
         'created_at', 'updated_at', 'last_login', 
+        'get_trips_as_driver', 'get_trips_as_passenger',
         'average_rating', 'total_ratings_count',
         'user_trips_link', 'user_bookings_link', 'user_ratings_link'
     ]
+    
+    def get_trips_as_driver(self, obj):
+        """Количество завершённых поездок как водитель"""
+        return obj.trips_as_driver
+    get_trips_as_driver.short_description = "Поездок (водитель)"
+    
+    def get_trips_as_passenger(self, obj):
+        """Количество завершённых поездок как пассажир"""
+        return obj.trips_as_passenger
+    get_trips_as_passenger.short_description = "Поездок (пассажир)"
     
     def user_trips_link(self, obj):
         """Ссылка на поездки пользователя"""

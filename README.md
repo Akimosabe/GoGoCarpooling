@@ -8,17 +8,44 @@ Django REST API backend for a carpooling service.
 - Django REST Framework
 - SQLite (development)
 
-## Quick Start
+## Quick Start (Windows PowerShell)
 
-```bash
-# Install dependencies
+```powershell
+# Перейти в папку проекта
+cd c:\Projects\GoGoCarpooling
+
+# Активировать виртуальное окружение
+.\venv\Scripts\Activate.ps1
+
+# Запустить сервер
+python manage.py runserver
+```
+
+Сервер будет доступен по адресу: http://127.0.0.1:8000/
+
+### Первоначальная настройка (если venv отсутствует)
+
+```powershell
+# Создать виртуальное окружение (Python 3.12)
+py -3.12 -m venv venv
+
+# Активировать
+.\venv\Scripts\Activate.ps1
+
+# Установить зависимости
 pip install -r requirements.txt
 
-# Run migrations
+# Применить миграции
 python manage.py migrate
+```
 
-# Start development server
-python manage.py runserver
+### Полезные команды
+
+```powershell
+python manage.py makemigrations   # Создать миграции
+python manage.py migrate          # Применить миграции
+python manage.py createsuperuser  # Создать админа
+python manage.py check            # Проверить проект
 ```
 
 ## API Documentation

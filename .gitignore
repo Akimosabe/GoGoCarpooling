@@ -19,3 +19,4 @@ Thumbs.db
 
 # Documentation
 docs/
+.cursor/

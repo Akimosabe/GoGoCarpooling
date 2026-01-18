@@ -133,6 +133,17 @@ class TripCreateUpdateSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """Валидация данных поездки"""
+        # Запрет изменения городов при редактировании
+        if self.instance:  # Это UPDATE, не CREATE
+            if 'origin' in data:
+                raise serializers.ValidationError({
+                    'origin': "Нельзя изменить город отправления. Удалите поездку и создайте новую."
+                })
+            if 'destination' in data:
+                raise serializers.ValidationError({
+                    'destination': "Нельзя изменить город назначения. Удалите поездку и создайте новую."
+                })
+        
         if 'available_seats' in data and 'total_seats' in data:
             if data['available_seats'] > data['total_seats']:
                 raise serializers.ValidationError(
