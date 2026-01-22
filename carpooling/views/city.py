@@ -98,6 +98,7 @@ def city_autocomplete(request):
         suggestions.append({
             "value": f"{city.name}, {city.region}",
             "data": {
+                "id": city.id,
                 "city": city.name,
                 "region": city.region,
                 "country": city.country,
