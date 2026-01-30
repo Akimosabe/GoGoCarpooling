@@ -7,6 +7,7 @@ import {
 } from '@/api/auth'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { HERO_BG_URL } from '@/constants'
 
 type Tab = 'login' | 'register' | 'reset' | 'reset-confirm'
 
@@ -104,14 +105,16 @@ export function Auth() {
     }
   }
 
-  const bgStyle = {
-    backgroundImage: `linear-gradient(rgba(15,23,42,0.5), rgba(15,23,42,0.6)), url(https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1920)`,
-  }
-
   return (
     <div
-      className="flex min-h-[calc(100vh-57px)] flex-col items-center justify-center bg-cover bg-center bg-no-repeat px-4 py-12"
-      style={bgStyle}
+      className="hero-bg flex min-h-[calc(100vh-57px)] flex-col items-center justify-center px-4 py-12"
+      style={{
+        backgroundColor: '#1e2d3a',
+        backgroundImage: `radial-gradient(ellipse 85% 45% at 50% -8%, rgba(34,197,94,0.12), transparent 50%), linear-gradient(180deg, rgba(15,23,42,0.35) 0%, rgba(22,101,52,0.42) 100%), url(${HERO_BG_URL})`,
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
+      }}
     >
       <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/95 p-8 shadow-xl backdrop-blur">
         <h1 className="mb-6 text-center text-2xl font-bold text-slate-900">

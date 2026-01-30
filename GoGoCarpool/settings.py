@@ -13,8 +13,15 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Загрузка скрытых настроек из hiddensettings.env (если файл есть и установлен python-dotenv)
 BASE_DIR = Path(__file__).resolve().parent.parent
+_env_file = BASE_DIR / 'hiddensettings.env'
+if _env_file.exists():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(_env_file)
+    except ImportError:
+        pass
 
 
 # Quick-start development settings - unsuitable for production
@@ -142,7 +149,12 @@ DATETIME_INPUT_FORMATS = [
 
 
 # Email settings (Yandex SMTP)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# В разработке: задайте EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend в .env,
+# чтобы письма (в т.ч. восстановление пароля) выводились в терминал Django, а не отправлялись.
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend'
+)
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.yandex.ru')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
@@ -191,8 +203,9 @@ REST_FRAMEWORK = {
 
 
 # Celery settings (Redis)
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+_redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_BROKER_URL = _redis_url
+CELERY_RESULT_BACKEND = _redis_url
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -209,3 +222,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True  # Для передачи cookies (сессии)
+
+# CSRF: доверенные источники для запросов с фронта (Django 4+)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]

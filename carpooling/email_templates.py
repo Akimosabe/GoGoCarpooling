@@ -4,12 +4,12 @@
 
 # ============ Восстановление пароля ============
 
-PASSWORD_RESET_SUBJECT = "Восстановление пароля GoGoCarpool"
+PASSWORD_RESET_SUBJECT = "Восстановление пароля GoGo"
 
 PASSWORD_RESET_MESSAGE = """
 Здравствуйте, {user_name}!
 
-Вы запросили восстановление пароля для вашего аккаунта в GoGoCarpool.
+Вы запросили восстановление пароля для вашего аккаунта в GoGo.
 
 Для сброса пароля перейдите по ссылке:
 {reset_link}
@@ -20,13 +20,13 @@ PASSWORD_RESET_MESSAGE = """
 
 --
 С уважением,
-Команда GoGoCarpool
+Команда GoGo
 """
 
 
 # ============ Уведомления ============
 
-NOTIFICATION_SUBJECT_TEMPLATE = "GoGoCarpool: {title}"
+NOTIFICATION_SUBJECT_TEMPLATE = "GoGo: {title}"
 
 NOTIFICATION_MESSAGE_TEMPLATE = """
 Здравствуйте, {user_name}!
@@ -38,7 +38,7 @@ NOTIFICATION_MESSAGE_TEMPLATE = """
 Вы можете управлять настройками уведомлений в личном кабинете.
 
 С уважением,
-Команда GoGoCarpool
+Команда GoGo
 """
 
 
@@ -47,5 +47,5 @@ NOTIFICATION_MESSAGE_TEMPLATE = """
 EMAIL_SIGNATURE = """
 --
 С уважением,
-Команда GoGoCarpool
+Команда GoGo
 """

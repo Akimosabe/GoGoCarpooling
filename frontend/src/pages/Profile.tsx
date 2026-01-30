@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Car, Pencil, Settings, Star, User } from 'lucide-react'
+import { Car, LogOut, Pencil, Settings, Star, User } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   userProfile,
@@ -22,7 +22,7 @@ type Tab = 'driver' | 'passenger'
 export function Profile() {
   const { id } = useParams<{ id?: string }>()
   const navigate = useNavigate()
-  const { user: currentUser } = useAuth()
+  const { user: currentUser, logout } = useAuth()
   const [profile, setProfile] = useState<UserType | null>(null)
   const [trips, setTrips] = useState<Trip[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -268,7 +268,7 @@ export function Profile() {
         </div>
 
         {isOwner && (
-          <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-100 pt-6">
+          <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-6">
             <Link to="/profile/settings">
               <Button variant="outline" size="sm" className="gap-1.5">
                 <Settings className="h-4 w-4" />
@@ -281,6 +281,18 @@ export function Profile() {
                 Мои авто
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-red-600 hover:bg-red-50 hover:text-red-700"
+              onClick={async () => {
+                await logout()
+                navigate('/')
+              }}
+            >
+              <LogOut className="h-4 w-4" />
+              Выход
+            </Button>
           </div>
         )}
       </Card>

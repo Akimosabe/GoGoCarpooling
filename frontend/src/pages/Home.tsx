@@ -5,6 +5,7 @@ import { CityAutocomplete } from '@/components/CityAutocomplete'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
+import { HERO_BG_URL } from '@/constants'
 
 export function Home() {
   const navigate = useNavigate()
@@ -26,19 +27,21 @@ export function Home() {
 
   return (
     <div
-      className={cn(
-        'relative min-h-[calc(100vh-57px)] bg-cover bg-center bg-no-repeat'
-      )}
+      className={cn('hero-bg relative min-h-[calc(100vh-57px)]')}
       style={{
-        backgroundImage: `linear-gradient(rgba(15,23,42,0.4), rgba(15,23,42,0.5)), url(https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1920)`,
+        backgroundColor: '#1e2d3a',
+        backgroundImage: `radial-gradient(ellipse 85% 45% at 50% -8%, rgba(34,197,94,0.12), transparent 50%), linear-gradient(180deg, rgba(15,23,42,0.35) 0%, rgba(22,101,52,0.42) 100%), url(${HERO_BG_URL})`,
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
       }}
     >
       <div className="relative mx-auto flex max-w-2xl flex-col items-center justify-center px-4 py-20 text-center">
         <h1 className="mb-2 text-4xl font-bold tracking-tight text-white drop-shadow md:text-5xl">
-          GoGo — карпулинг
+          GoGo – совместные поездки
         </h1>
-        <p className="mb-10 text-lg text-slate-200">
-          Находите попутчиков или делите дорогу
+        <p className="mb-10 text-lg font-medium text-green-200 drop-shadow-sm">
+          Едем вместе – проще и выгоднее
         </p>
 
         <div className="w-full max-w-xl rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xl backdrop-blur">

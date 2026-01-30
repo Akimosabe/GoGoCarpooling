@@ -23,4 +23,4 @@ docs/
 
 # Environment variables (secrets)
 .env
-!.env.example
+hiddensettings.env

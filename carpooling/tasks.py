@@ -37,18 +37,29 @@ def send_email_task(self, subject, message, recipient_list):
         raise self.retry(exc=exc)
 
 
-@shared_task
-def send_password_reset_email(user_email, user_name, reset_link):
+@shared_task(bind=True)
+def send_password_reset_email(self, user_email, user_name, reset_link):
     """
-    Отправка письма для восстановления пароля.
+    Отправка письма для восстановления пароля (сразу из этой задачи, без вложенной).
+    Ошибки SMTP будут видны в логах Celery.
     """
     subject = PASSWORD_RESET_SUBJECT
     message = PASSWORD_RESET_MESSAGE.format(
         user_name=user_name,
         reset_link=reset_link
     )
-    
-    return send_email_task.delay(subject, message.strip(), [user_email])
+    try:
+        send_mail(
+            subject=subject,
+            message=message.strip(),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user_email],
+            fail_silently=False,
+        )
+        return f"Письмо восстановления пароля отправлено на {user_email}"
+    except Exception as exc:
+        # Логируем и пробрасываем — в консоли Celery будет виден traceback
+        raise exc
 
 
 @shared_task

@@ -6,9 +6,12 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
 
 from carpooling.models import User
 from carpooling.tasks import send_password_reset_email
+from carpooling.email_templates import PASSWORD_RESET_SUBJECT, PASSWORD_RESET_MESSAGE
 from carpooling.serializers import (
     RegisterSerializer, LoginSerializer,
     UserSerializer, UserDetailSerializer
@@ -96,15 +99,27 @@ def password_reset_request(request):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     
     # Формирование ссылки для восстановления (для фронтенда)
-    reset_link = f"http://localhost:3000/password-reset/{uid}/{token}/"
-    
-    # Асинхронная отправка email через Celery
-    send_password_reset_email.delay(
-        user_email=user.email,
-        user_name=user.first_name or user.email,
-        reset_link=reset_link
-    )
-    
+    reset_link = f"http://localhost:5173/auth?uid={uid}&token={token}"
+    user_name = user.first_name or user.email
+    subject = PASSWORD_RESET_SUBJECT
+    message = PASSWORD_RESET_MESSAGE.format(user_name=user_name, reset_link=reset_link)
+
+    # Сначала через Celery (Redis); если не получилось — сразу из Django
+    try:
+        send_password_reset_email.delay(
+            user_email=user.email,
+            user_name=user_name,
+            reset_link=reset_link
+        )
+    except Exception:
+        send_mail(
+            subject=subject,
+            message=message.strip(),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+
     return Response({
         "message": "Если пользователь с таким email существует, на него отправлена ссылка для восстановления пароля"
     })

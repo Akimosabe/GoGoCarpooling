@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { get } from '@/api/client'
 import * as authApi from '@/api/auth'
 import type { User } from '@/api/types'
 
@@ -37,7 +38,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    refresh()
+    const init = async () => {
+      try {
+        await get('/api/ping/')
+      } catch {
+        // игнорируем — офлайн или API недоступен
+      }
+      await refresh()
+    }
+    init()
   }, [refresh])
 
   const login = useCallback(
