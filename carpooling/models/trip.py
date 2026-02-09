@@ -73,7 +73,7 @@ class Trip(models.Model):
     # Настройки поездки
     smoking_allowed = models.BooleanField(
         default=False, 
-        verbose_name="Можно курить"
+        verbose_name="Остановки на перекур"
     )
     pets_allowed = models.BooleanField(
         default=False, 
@@ -89,7 +89,7 @@ class Trip(models.Model):
     )
     parcel_allowed = models.BooleanField(
         default=False,
-        verbose_name="Можно посылку"
+        verbose_name="Перевозка посылок"
     )
     luggage_size = models.CharField(
         max_length=20,

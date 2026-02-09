@@ -32,7 +32,6 @@ export function CreateTrip() {
   const [departureTime, setDepartureTime] = useState('')
   const [price, setPrice] = useState('')
   const [totalSeats, setTotalSeats] = useState(3)
-  const [availableSeats, setAvailableSeats] = useState(3)
   const [description, setDescription] = useState('')
   const [smokingAllowed, setSmokingAllowed] = useState(false)
   const [petsAllowed, setPetsAllowed] = useState(false)
@@ -74,7 +73,6 @@ export function CreateTrip() {
           setDestId(t.destination.id)
           setPrice(typeof t.price === 'string' ? t.price : String(t.price))
           setTotalSeats(t.total_seats)
-          setAvailableSeats(t.available_seats)
           setDescription(t.description ?? '')
           setSmokingAllowed(t.smoking_allowed)
           setPetsAllowed(t.pets_allowed)
@@ -112,7 +110,7 @@ export function CreateTrip() {
         departure_datetime: dt,
         price: price.replace(/\s/g, ''),
         total_seats: totalSeats,
-        available_seats: availableSeats,
+        available_seats: totalSeats,
         description: description || undefined,
         smoking_allowed: smokingAllowed,
         pets_allowed: petsAllowed,
@@ -221,7 +219,7 @@ export function CreateTrip() {
 
         <Card className="mb-6">
           <h2 className="mb-4 font-semibold text-slate-800">Места и цена</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm text-slate-600">Цена (₽)</label>
               <Input
@@ -240,23 +238,7 @@ export function CreateTrip() {
                 min={1}
                 max={9}
                 value={totalSeats}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10) || 1
-                  setTotalSeats(v)
-                  setAvailableSeats((a) => Math.min(a, v))
-                }}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">Доступно</label>
-              <Input
-                type="number"
-                min={0}
-                max={9}
-                value={availableSeats}
-                onChange={(e) =>
-                  setAvailableSeats(Math.min(totalSeats, parseInt(e.target.value, 10) || 0))
-                }
+                onChange={(e) => setTotalSeats(Math.min(9, Math.max(1, parseInt(e.target.value, 10) || 1)))}
               />
             </div>
           </div>
@@ -381,52 +363,56 @@ export function CreateTrip() {
               placeholder="Удобства, остановки по пути…"
             />
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={smokingAllowed}
-                onChange={(e) => setSmokingAllowed(e.target.checked)}
-              />
-              <Cigarette className="h-4 w-4 text-slate-600" aria-hidden />
-              <span className="text-sm">Курение</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={petsAllowed}
-                onChange={(e) => setPetsAllowed(e.target.checked)}
-              />
-              <Dog className="h-4 w-4 text-slate-600" aria-hidden />
-              <span className="text-sm">С животными</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={childSeatAvailable}
-                onChange={(e) => setChildSeatAvailable(e.target.checked)}
-              />
-              <Baby className="h-4 w-4 text-slate-600" aria-hidden />
-              <span className="text-sm">Детское кресло</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={twoRearSeats}
-                onChange={(e) => setTwoRearSeats(e.target.checked)}
-              />
-              <Users2 className="h-4 w-4 text-slate-600" aria-hidden />
-              <span className="text-sm">2 места сзади</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
-                checked={parcelAllowed}
-                onChange={(e) => setParcelAllowed(e.target.checked)}
-              />
-              <Package className="h-4 w-4 text-slate-600" aria-hidden />
-              <span className="text-sm">Посылка</span>
-            </label>
+          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2">
+            <div className="flex flex-col gap-2">
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={smokingAllowed}
+                  onChange={(e) => setSmokingAllowed(e.target.checked)}
+                />
+                <Cigarette className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">Остановки на перекур</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={petsAllowed}
+                  onChange={(e) => setPetsAllowed(e.target.checked)}
+                />
+                <Dog className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">Можно с животными</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={childSeatAvailable}
+                  onChange={(e) => setChildSeatAvailable(e.target.checked)}
+                />
+                <Baby className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">Детское кресло</span>
+              </label>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={twoRearSeats}
+                  onChange={(e) => setTwoRearSeats(e.target.checked)}
+                />
+                <Users2 className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">2 места сзади</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={parcelAllowed}
+                  onChange={(e) => setParcelAllowed(e.target.checked)}
+                />
+                <Package className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">Перевозка посылок</span>
+              </label>
+            </div>
           </div>
         </Card>
 

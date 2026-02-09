@@ -259,6 +259,16 @@ class TripCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     'destination': "Нельзя изменить город назначения. Удалите поездку и создайте новую."
                 })
+            # При наличии бронирований нельзя менять цену и места
+            has_bookings = self.instance.bookings.filter(
+                status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_PENDING]
+            ).exists()
+            if has_bookings:
+                for field in ('price', 'total_seats', 'available_seats'):
+                    if field in data:
+                        raise serializers.ValidationError({
+                            field: "Изменить можно только при отсутствии бронирований. Отмените бронирования или создайте поездку заново."
+                        })
         
         if 'available_seats' in data and 'total_seats' in data:
             if data['available_seats'] > data['total_seats']:
@@ -302,19 +312,18 @@ class TripCreateUpdateSerializer(serializers.ModelSerializer):
             # Сохраняем время в UTC
             data['departure_datetime'] = departure_utc
         
-        # Проверяем, что указан либо car, либо new_car
-        car = data.get('car')
-        new_car = data.get('new_car')
-        
-        if not car and not new_car:
-            raise serializers.ValidationError(
-                "Необходимо указать существующий автомобиль (car) или данные для нового (new_car)"
-            )
-        
-        if car and new_car:
-            raise serializers.ValidationError(
-                "Укажите либо существующий автомобиль (car), либо данные для нового (new_car), но не оба"
-            )
+        # При создании поездки обязательно указать car или new_car
+        if not self.instance:
+            car = data.get('car')
+            new_car = data.get('new_car')
+            if not car and not new_car:
+                raise serializers.ValidationError(
+                    "Необходимо указать существующий автомобиль (car) или данные для нового (new_car)"
+                )
+            if car and new_car:
+                raise serializers.ValidationError(
+                    "Укажите либо существующий автомобиль (car), либо данные для нового (new_car), но не оба"
+                )
         
         return data
     

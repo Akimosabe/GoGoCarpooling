@@ -20,12 +20,12 @@ export function TripOptionIcons({ trip, className = '', iconClassName = 'h-4 w-4
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className}`} aria-hidden>
       {trip.smoking_allowed && (
-        <span title="Можно курить">
+        <span title="Остановки на перекур">
           <Cigarette className={iconClassName} />
         </span>
       )}
       {trip.pets_allowed && (
-        <span title="С животными">
+        <span title="Можно с животными">
           <Dog className={iconClassName} />
         </span>
       )}
@@ -40,7 +40,7 @@ export function TripOptionIcons({ trip, className = '', iconClassName = 'h-4 w-4
         </span>
       )}
       {trip.parcel_allowed && (
-        <span title="Посылка">
+        <span title="Перевозка посылок">
           <Package className={iconClassName} />
         </span>
       )}

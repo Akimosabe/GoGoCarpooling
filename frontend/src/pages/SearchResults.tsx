@@ -15,10 +15,10 @@ import { cn } from '@/lib/utils'
 
 const OPTION_FILTERS = [
   { key: 'two_rear_seats', Icon: Users2, title: '2 места сзади' },
-  { key: 'smoking_allowed', Icon: Cigarette, title: 'Можно курить' },
-  { key: 'pets_allowed', Icon: Dog, title: 'С животными' },
+  { key: 'smoking_allowed', Icon: Cigarette, title: 'Остановки на перекур' },
+  { key: 'pets_allowed', Icon: Dog, title: 'Можно с животными' },
   { key: 'child_seat_available', Icon: Baby, title: 'Детское кресло' },
-  { key: 'parcel_allowed', Icon: Package, title: 'Посылка' },
+  { key: 'parcel_allowed', Icon: Package, title: 'Перевозка посылок' },
 ] as const
 
 function TripCard({ t }: { t: Trip }) {

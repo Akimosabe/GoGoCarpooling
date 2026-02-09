@@ -158,15 +158,14 @@ export function TripDetail() {
     }
   }
 
+  const hasBookings = (trip?.seat_passengers?.length ?? 0) > 0
+
   const handleSaveEdit = async () => {
     if (!trip || !isDriver || submitting) return
     setSubmitting(true)
     setError('')
     try {
-      const updated = await editTrip(trip.id, {
-        price: editForm.price as string,
-        total_seats: editForm.total_seats,
-        available_seats: editForm.available_seats,
+      const payload: Parameters<typeof editTrip>[1] = {
         description: editForm.description ?? undefined,
         smoking_allowed: editForm.smoking_allowed,
         pets_allowed: editForm.pets_allowed,
@@ -174,7 +173,13 @@ export function TripDetail() {
         two_rear_seats: editForm.two_rear_seats,
         parcel_allowed: editForm.parcel_allowed,
         luggage_size: editForm.luggage_size,
-      })
+      }
+      if (!hasBookings) {
+        payload.price = editForm.price as string
+        payload.total_seats = editForm.total_seats
+        payload.available_seats = editForm.total_seats
+      }
+      const updated = await editTrip(trip.id, payload)
       setTrip(updated)
       setEditMode(false)
     } catch (err) {
@@ -239,19 +244,19 @@ export function TripDetail() {
             className={`flex items-center gap-3 ${trip.smoking_allowed ? 'text-slate-600' : 'text-slate-400 line-through'}`}
           >
             <Cigarette className={`h-5 w-5 shrink-0 ${trip.smoking_allowed ? '' : 'opacity-50'}`} />
-            Можно курить
+            Остановки на перекур
           </li>
           <li
             className={`flex items-center gap-3 ${trip.pets_allowed ? 'text-slate-600' : 'text-slate-400 line-through'}`}
           >
             <Dog className={`h-5 w-5 shrink-0 ${trip.pets_allowed ? '' : 'opacity-50'}`} />
-            С животными
+            Можно с животными
           </li>
           <li
             className={`flex items-center gap-3 ${trip.parcel_allowed ? 'text-slate-600' : 'text-slate-400 line-through'}`}
           >
             <Package className={`h-5 w-5 shrink-0 ${trip.parcel_allowed ? '' : 'opacity-50'}`} />
-            Посылка
+            Перевозка посылок
           </li>
           <li
             className={`flex items-center gap-3 ${trip.child_seat_available ? 'text-slate-600' : 'text-slate-400 line-through'}`}
@@ -449,6 +454,8 @@ export function TripDetail() {
                 onChange={(e) =>
                   setEditForm((f) => ({ ...f, price: e.target.value }))
                 }
+                disabled={hasBookings}
+                className={hasBookings ? 'cursor-not-allowed bg-slate-100 text-slate-500' : undefined}
               />
             </div>
             <div>
@@ -464,25 +471,15 @@ export function TripDetail() {
                     total_seats: parseInt(e.target.value, 10) || 0,
                   }))
                 }
+                disabled={hasBookings}
+                className={hasBookings ? 'cursor-not-allowed bg-slate-100 text-slate-500' : undefined}
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">
-                Доступно мест
-              </label>
-              <Input
-                type="number"
-                min={0}
-                max={9}
-                value={editForm.available_seats ?? ''}
-                onChange={(e) =>
-                  setEditForm((f) => ({
-                    ...f,
-                    available_seats: parseInt(e.target.value, 10) || 0,
-                  }))
-                }
-              />
-            </div>
+            {hasBookings && (
+              <p className="sm:col-span-2 text-xs text-slate-500">
+                Цену и количество мест можно изменить только при отсутствии бронирований. При необходимости отмените бронирования или создайте поездку заново.
+              </p>
+            )}
             <div className="sm:col-span-2">
               <label className="mb-1 block text-sm text-slate-600">
                 Описание
@@ -495,6 +492,67 @@ export function TripDetail() {
                   setEditForm((f) => ({ ...f, description: e.target.value }))
                 }
               />
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2">
+            <div className="flex flex-col gap-2">
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={editForm.smoking_allowed ?? false}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, smoking_allowed: e.target.checked }))
+                  }
+                />
+                <Cigarette className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">Остановки на перекур</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={editForm.pets_allowed ?? false}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, pets_allowed: e.target.checked }))
+                  }
+                />
+                <Dog className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">Можно с животными</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={editForm.child_seat_available ?? false}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, child_seat_available: e.target.checked }))
+                  }
+                />
+                <Baby className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">Детское кресло</span>
+              </label>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={editForm.two_rear_seats ?? false}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, two_rear_seats: e.target.checked }))
+                  }
+                />
+                <Users2 className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">2 места сзади</span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={editForm.parcel_allowed ?? false}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, parcel_allowed: e.target.checked }))
+                  }
+                />
+                <Package className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                <span className="text-xs text-slate-700">Перевозка посылок</span>
+              </label>
             </div>
           </div>
           <div className="mt-4 flex gap-2">
