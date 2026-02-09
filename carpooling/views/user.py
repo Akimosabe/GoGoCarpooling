@@ -25,9 +25,15 @@ def user_profile(request, user_id):
 @permission_classes([IsAuthenticated])
 def update_profile(request):
     """Обновление профиля текущего пользователя. POST — для загрузки аватарки (multipart), PUT — без файла."""
+    if request.method == 'POST' and request.content_type and 'multipart' in request.content_type:
+        data = {**request.POST.dict()}
+        if request.FILES.get('avatar'):
+            data['avatar'] = request.FILES['avatar']
+    else:
+        data = request.data
     serializer = UserProfileSerializer(
-        request.user, 
-        data=request.data, 
+        request.user,
+        data=data,
         partial=True,
         context={'request': request}
     )

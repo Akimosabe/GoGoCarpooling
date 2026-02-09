@@ -10,13 +10,12 @@ import {
 } from '@/api'
 import type { User as UserType, Trip, Booking } from '@/api/types'
 import { TripOptionIcons } from '@/components/TripOptionIcons'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getAvatarUrl } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/utils'
 
-const MEDIA = '/media'
 
 type Tab = 'driver' | 'passenger'
 
@@ -122,9 +121,7 @@ export function Profile() {
 
   const avatarUrl = avatarFile
     ? URL.createObjectURL(avatarFile)
-    : profile.avatar
-      ? `${MEDIA}/${profile.avatar}`
-      : null
+    : getAvatarUrl(profile.avatar) ?? null
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -153,9 +150,27 @@ export function Profile() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const f = e.target.files?.[0]
-                    if (f) setAvatarFile(f)
+                    if (!f || !currentUser || !isOwner || submitting) return
+                    setAvatarFile(f)
+                    setSubmitting(true)
+                    setError('')
+                    try {
+                      const updated = await updateProfile({
+                        first_name: profile.first_name ?? undefined,
+                        phone: profile.phone ?? undefined,
+                        date_of_birth: profile.date_of_birth ?? null,
+                        avatar: f,
+                      })
+                      setProfile(updated)
+                      setAvatarFile(null)
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Ошибка загрузки фото')
+                    } finally {
+                      setSubmitting(false)
+                    }
+                    e.target.value = ''
                   }}
                 />
                 <Button
@@ -164,6 +179,7 @@ export function Profile() {
                   size="sm"
                   className="absolute -bottom-1 -right-1 rounded-full p-1.5 shadow"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={submitting}
                   aria-label="Изменить фото"
                 >
                   <Pencil className="h-4 w-4" />

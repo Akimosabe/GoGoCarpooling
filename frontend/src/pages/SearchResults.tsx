@@ -3,12 +3,10 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { tripList } from '@/api/trips'
 import type { Trip, Paginated } from '@/api/types'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getAvatarUrl } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { TripOptionIcons } from '@/components/TripOptionIcons'
-
-const MEDIA = '/media'
 
 function TripCard({ t }: { t: Trip }) {
   const price = typeof t.price === 'string' ? parseFloat(t.price) : t.price
@@ -39,9 +37,9 @@ function TripCard({ t }: { t: Trip }) {
         </div>
         <TripOptionIcons trip={t} className="mt-2" />
         <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3">
-          {t.driver.avatar ? (
+          {getAvatarUrl(t.driver.avatar) ? (
             <img
-              src={`${MEDIA}/${t.driver.avatar}`}
+              src={getAvatarUrl(t.driver.avatar)!}
               alt=""
               className="h-8 w-8 rounded-full object-cover"
             />

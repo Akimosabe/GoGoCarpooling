@@ -57,3 +57,13 @@ export function getSearchMaxDateISO(): string {
   d.setDate(d.getDate() + 90)
   return d.toISOString().slice(0, 10)
 }
+
+const MEDIA = '/media'
+
+/** URL для аватарки: API может вернуть полный URL, путь /media/... или относительный путь avatars/... */
+export function getAvatarUrl(avatar: string | null | undefined): string | null {
+  if (!avatar) return null
+  if (avatar.startsWith('http')) return avatar
+  if (avatar.startsWith('/')) return avatar
+  return `${MEDIA}/${avatar}`
+}

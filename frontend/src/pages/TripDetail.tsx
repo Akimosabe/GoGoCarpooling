@@ -12,12 +12,10 @@ import {
   userBookings,
 } from '@/api'
 import type { Trip, Booking, SeatPassenger } from '@/api/types'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getAvatarUrl } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-
-const MEDIA = '/media'
 
 export function TripDetail() {
   const { id } = useParams<{ id: string }>()
@@ -270,9 +268,9 @@ export function TripDetail() {
         </ul>
 
         <div className="mt-6 flex items-center gap-3 border-t border-slate-100 pt-6">
-          {trip.driver.avatar ? (
-            <img
-              src={`${MEDIA}/${trip.driver.avatar}`}
+{getAvatarUrl(trip.driver.avatar) ? (
+              <img
+              src={getAvatarUrl(trip.driver.avatar)!}
               alt=""
               className="h-12 w-12 rounded-full object-cover"
             />
@@ -326,8 +324,8 @@ export function TripDetail() {
                         onClick={(ev) => ev.stopPropagation()}
                         className="ring-2 ring-white rounded-full overflow-hidden"
                       >
-                        {p.passenger.avatar ? (
-                          <img src={`${MEDIA}/${p.passenger.avatar}`} alt="" className="h-12 w-12 object-cover" />
+                        {getAvatarUrl(p.passenger.avatar) ? (
+                          <img src={getAvatarUrl(p.passenger.avatar)!} alt="" className="h-12 w-12 object-cover" />
                         ) : (
                           <div className="h-12 w-12 flex items-center justify-center bg-slate-200 text-slate-600 text-base font-medium">
                             {(p.passenger.first_name || '?')[0]}
@@ -344,8 +342,8 @@ export function TripDetail() {
                     {(trip.seat_passengers ?? []).map((p: SeatPassenger) => (
                       <li key={p.booking_id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
                         <div className="flex items-center gap-3">
-                          {p.passenger.avatar ? (
-                            <img src={`${MEDIA}/${p.passenger.avatar}`} alt="" className="h-10 w-10 rounded-full object-cover" />
+                          {getAvatarUrl(p.passenger.avatar) ? (
+                            <img src={getAvatarUrl(p.passenger.avatar)!} alt="" className="h-10 w-10 rounded-full object-cover" />
                           ) : (
                             <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">
                               {(p.passenger.first_name || '?')[0]}
@@ -384,8 +382,8 @@ export function TripDetail() {
                     to={`/profile/${p.passenger.id}`}
                     className="ring-2 ring-white rounded-full overflow-hidden"
                   >
-                    {p.passenger.avatar ? (
-                      <img src={`${MEDIA}/${p.passenger.avatar}`} alt="" className="h-12 w-12 object-cover" />
+                    {getAvatarUrl(p.passenger.avatar) ? (
+                      <img src={getAvatarUrl(p.passenger.avatar)!} alt="" className="h-12 w-12 object-cover" />
                     ) : (
                       <div className="h-12 w-12 flex items-center justify-center bg-slate-200 text-slate-600 text-base font-medium">
                         {(p.passenger.first_name || '?')[0]}

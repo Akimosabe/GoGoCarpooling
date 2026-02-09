@@ -5,9 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { notificationsList, markNotificationRead, markAllNotificationsRead } from '@/api/notifications'
 import type { Notification } from '@/api/types'
 import { Button } from '@/components/ui/Button'
-import { cn } from '@/lib/utils'
-
-const MEDIA = '/media'
+import { cn, getAvatarUrl } from '@/lib/utils'
 
 export function Header() {
   const { user } = useAuth()
@@ -135,9 +133,9 @@ export function Header() {
 
             <Link to="/profile">
               <Button variant="ghost" size="sm" className="gap-1.5">
-                {user.avatar ? (
+                {getAvatarUrl(user.avatar) ? (
                   <img
-                    src={`${MEDIA}/${user.avatar}`}
+                    src={getAvatarUrl(user.avatar)!}
                     alt=""
                     className="h-6 w-6 rounded-full object-cover"
                   />
