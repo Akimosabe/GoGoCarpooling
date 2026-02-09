@@ -10,7 +10,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 
 export function ProfileCars() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [cars, setCars] = useState<CarType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -26,6 +26,7 @@ export function ProfileCars() {
   })
 
   useEffect(() => {
+    if (authLoading) return
     if (!user) {
       navigate('/auth')
       return
@@ -34,7 +35,7 @@ export function ProfileCars() {
       .then(setCars)
       .catch(() => setCars([]))
       .finally(() => setLoading(false))
-  }, [user, navigate])
+  }, [user, authLoading, navigate])
 
   const resetForm = () => {
     setForm({
@@ -94,6 +95,13 @@ export function ProfileCars() {
     }
   }
 
+  if (authLoading) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-12 text-center text-slate-500">
+        Загрузка…
+      </div>
+    )
+  }
   if (!user) return null
   if (loading) {
     return (

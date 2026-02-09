@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { tripList } from '@/api/trips'
 import type { Trip, Paginated } from '@/api/types'
-import { formatDate, getAvatarUrl } from '@/lib/utils'
+import { formatTripDeparture, getAvatarUrl } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { TripOptionIcons } from '@/components/TripOptionIcons'
@@ -23,7 +23,7 @@ function TripCard({ t }: { t: Trip }) {
               </span>
             </div>
             <p className="mt-1 text-sm text-slate-500">
-              {formatDate(t.departure_datetime)}
+              {formatTripDeparture(t.departure_datetime, t.departure_datetime_display)}
             </p>
           </div>
           <div className="text-right">

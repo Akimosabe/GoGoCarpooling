@@ -31,6 +31,18 @@ class CityShortSerializer(serializers.ModelSerializer):
         return f"{obj.name}, {obj.region}"
 
 
+def _departure_in_origin_tz(obj):
+    """Время отправления в часовом поясе города отправления (как указал водитель)."""
+    dt = getattr(obj, 'departure_datetime', None)
+    if not dt:
+        return None
+    origin = getattr(obj, 'origin', None)
+    tz_name = origin.timezone if origin else 'Europe/Moscow'
+    tz = pytz.timezone(tz_name)
+    local_dt = dt.astimezone(tz)
+    return local_dt.strftime('%d.%m.%Y, %H:%M')
+
+
 class TripListSerializer(serializers.ModelSerializer):
     """Сериализатор для списка поездок (упрощенный)"""
     driver = UserSerializer(read_only=True)
@@ -39,6 +51,7 @@ class TripListSerializer(serializers.ModelSerializer):
     origin = CityShortSerializer(read_only=True)
     destination = CityShortSerializer(read_only=True)
     departure_datetime = serializers.SerializerMethodField()
+    departure_datetime_display = serializers.SerializerMethodField()
     effective_status = serializers.CharField(read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
 
@@ -46,16 +59,20 @@ class TripListSerializer(serializers.ModelSerializer):
         model = Trip
         fields = [
             'id', 'driver', 'driver_rating', 'car',
-            'origin', 'destination', 'departure_datetime',
+            'origin', 'destination', 'departure_datetime', 'departure_datetime_display',
             'price', 'total_seats', 'available_seats',
             'smoking_allowed', 'pets_allowed', 'child_seat_available', 'two_rear_seats', 'parcel_allowed', 'luggage_size',
             'status', 'effective_status', 'is_expired', 'created_at'
         ]
 
     def get_departure_datetime(self, obj):
-        """ISO 8601 строка для надёжного парсинга на фронте"""
+        """ISO 8601 для сортировки/фильтров; отображение — departure_datetime_display (время города отправления)."""
         dt = getattr(obj, 'departure_datetime', None)
         return dt.isoformat() if dt else None
+
+    def get_departure_datetime_display(self, obj):
+        """Время как ввёл водитель: в поясе города отправления (дд.мм.гггг, чч:мм)."""
+        return _departure_in_origin_tz(obj)
 
     def get_driver_rating(self, obj):
         """Получить рейтинг водителя"""
@@ -100,6 +117,7 @@ class TripDetailSerializer(serializers.ModelSerializer):
     origin = CityShortSerializer(read_only=True)
     destination = CityShortSerializer(read_only=True)
     departure_datetime = serializers.SerializerMethodField()
+    departure_datetime_display = serializers.SerializerMethodField()
     driver_phone = serializers.SerializerMethodField()
     bookings_count = serializers.SerializerMethodField()
     seat_passengers = serializers.SerializerMethodField()
@@ -110,7 +128,7 @@ class TripDetailSerializer(serializers.ModelSerializer):
         model = Trip
         fields = [
             'id', 'driver', 'car',
-            'origin', 'destination', 'departure_datetime',
+            'origin', 'destination', 'departure_datetime', 'departure_datetime_display',
             'price', 'total_seats', 'available_seats',
             'description', 'smoking_allowed', 'pets_allowed', 'child_seat_available', 'two_rear_seats', 'parcel_allowed', 'luggage_size',
             'driver_phone', 'bookings_count', 'seat_passengers',
@@ -124,6 +142,9 @@ class TripDetailSerializer(serializers.ModelSerializer):
     def get_departure_datetime(self, obj):
         dt = getattr(obj, 'departure_datetime', None)
         return dt.isoformat() if dt else None
+
+    def get_departure_datetime_display(self, obj):
+        return _departure_in_origin_tz(obj)
 
     def get_driver_phone(self, obj):
         """Телефон водителя: только для водителя или пассажира с бронированием"""

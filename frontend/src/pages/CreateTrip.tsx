@@ -15,7 +15,7 @@ import { getTodayISO, getSearchMaxDateISO } from '@/lib/utils'
 export function CreateTrip() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const copyFromTrip = (location.state as { copyFromTrip?: Trip } | null)?.copyFromTrip
   const [cars, setCars] = useState<CarType[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,6 +52,7 @@ export function CreateTrip() {
   }, [])
 
   useEffect(() => {
+    if (authLoading) return
     if (!user) {
       navigate('/auth')
       return
@@ -88,7 +89,7 @@ export function CreateTrip() {
       })
       .catch(() => setCars([]))
       .finally(() => setLoading(false))
-  }, [user, navigate, copyFromTrip])
+  }, [user, authLoading, navigate, copyFromTrip])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,6 +146,13 @@ export function CreateTrip() {
     }
   }
 
+  if (authLoading) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12 text-center text-slate-500">
+        Загрузка…
+      </div>
+    )
+  }
   if (!user) return null
   if (loading) {
     return (

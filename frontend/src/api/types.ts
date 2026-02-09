@@ -64,6 +64,8 @@ export interface Trip {
   origin: City
   destination: City
   departure_datetime: string
+  /** Время в поясе города отправления: "дд.мм.гггг, чч:мм" (как ввёл водитель) */
+  departure_datetime_display?: string | null
   price: string
   total_seats: number
   available_seats: number

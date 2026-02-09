@@ -10,7 +10,7 @@ import {
 } from '@/api'
 import type { User as UserType, Trip, Booking } from '@/api/types'
 import { TripOptionIcons } from '@/components/TripOptionIcons'
-import { formatDate, getAvatarUrl } from '@/lib/utils'
+import { formatDate, formatTripDeparture, getAvatarUrl } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -22,7 +22,7 @@ type Tab = 'driver' | 'passenger'
 export function Profile() {
   const { id } = useParams<{ id?: string }>()
   const navigate = useNavigate()
-  const { user: currentUser, logout } = useAuth()
+  const { user: currentUser, loading: authLoading, logout } = useAuth()
   const [profile, setProfile] = useState<UserType | null>(null)
   const [trips, setTrips] = useState<Trip[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -43,6 +43,7 @@ export function Profile() {
   const isOwner = !!currentUser && profileId === currentUser.id
 
   useEffect(() => {
+    if (authLoading) return
     if (!profileId) {
       if (!currentUser) navigate('/auth')
       setLoading(false)
@@ -73,11 +74,12 @@ export function Profile() {
       }
     }
     load()
-  }, [profileId, isOwner, currentUser, navigate])
+  }, [profileId, isOwner, currentUser, authLoading, navigate])
 
   useEffect(() => {
+    if (authLoading) return
     if (!currentUser && !id) navigate('/auth')
-  }, [currentUser, id, navigate])
+  }, [currentUser, id, authLoading, navigate])
 
   const handleSaveProfile = async () => {
     if (!currentUser || !isOwner || submitting) return
@@ -100,7 +102,7 @@ export function Profile() {
     }
   }
 
-  if (loading && !profile) {
+  if ((authLoading || loading) && !profile) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12 text-center text-slate-500">
         Загрузка…
@@ -363,7 +365,7 @@ export function Profile() {
                           {t.destination.display_name ?? t.destination.name}
                         </span>
                         <span className="text-base font-semibold text-slate-800">
-                          {formatDate(t.departure_datetime)}
+                          {formatTripDeparture(t.departure_datetime, t.departure_datetime_display)}
                         </span>
                       </div>
                       <p className="mt-2 text-sm text-slate-600">
@@ -386,7 +388,7 @@ export function Profile() {
                           {b.trip.destination.display_name ?? b.trip.destination.name}
                         </span>
                         <span className="text-base font-semibold text-slate-800">
-                          {formatDate(b.trip.departure_datetime)}
+                          {formatTripDeparture(b.trip.departure_datetime, b.trip.departure_datetime_display)}
                         </span>
                       </div>
                       <p className="mt-2 text-sm text-slate-600">

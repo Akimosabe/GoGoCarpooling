@@ -218,6 +218,9 @@ class Command(BaseCommand):
         
         # Получаем название региона
         region = self.get_region_name(country_code, admin1_code, russian_name)
+        # Часовой пояс из выгрузки GeoNames (колонка 17 — IANA timezone id)
+        tz_raw = row[17].strip() if len(row) > 17 else ''
+        timezone = tz_raw if tz_raw else 'Europe/Moscow'
         
         # Координаты
         try:
@@ -233,6 +236,7 @@ class Command(BaseCommand):
             'region': region,
             'country': country_name,
             'country_code': country_code,
+            'timezone': timezone,
             'latitude': latitude,
             'longitude': longitude,
             'population': population,

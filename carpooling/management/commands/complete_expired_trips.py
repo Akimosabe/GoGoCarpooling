@@ -17,12 +17,11 @@ Management command для автоматического завершения п
     Запуск каждую минуту создаёт пренебрежимо малую нагрузку на БД.
 
 Логика:
-    departure_datetime хранится в UTC с учётом часового пояса города отправления.
-    Сравнение с timezone.now() (UTC) корректно определяет, началась ли поездка.
+    Просрочка проверяется по времени города ОТКУДА (origin): сравниваем
+    «сейчас в городе отправления» с «временем выезда в городе отправления».
 """
 
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 import pytz
 import logging
 
@@ -49,18 +48,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options['dry_run']
         quiet = options['quiet']
-        now = timezone.now()
-        
-        # Находим все активные поездки с датой в прошлом (в UTC)
-        # departure_datetime уже хранится в UTC с учётом часового пояса города
-        # Запрос использует составной индекс (status, departure_datetime)
-        expired_trips = Trip.objects.filter(
-            status=Trip.STATUS_ACTIVE,
-            departure_datetime__lt=now
-        )
-        
-        count = expired_trips.count()
-        
+
+        # Берём все активные поездки и проверяем просрочку по времени города ОТКУДА
+        active_trips = Trip.objects.filter(status=Trip.STATUS_ACTIVE).select_related('origin', 'destination')
+        expired_trips = [t for t in active_trips if t.is_expired]
+        count = len(expired_trips)
+
         if count == 0:
             if not quiet:
                 self.stdout.write(
@@ -72,8 +65,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING(f'[DRY RUN] Найдено {count} просроченных поездок:')
             )
-            for trip in expired_trips.select_related('origin', 'destination'):
-                # Показываем время в локальном часовом поясе города отправления
+            for trip in expired_trips:
                 origin_tz = pytz.timezone(trip.origin.timezone)
                 local_time = trip.departure_datetime.astimezone(origin_tz)
                 self.stdout.write(
@@ -81,8 +73,8 @@ class Command(BaseCommand):
                     f'({local_time.strftime("%d.%m.%Y %H:%M")} {trip.origin.timezone})'
                 )
         else:
-            # Обновляем статус всех просроченных поездок одним запросом
-            updated = expired_trips.update(status=Trip.STATUS_COMPLETED)
+            expired_ids = [t.id for t in expired_trips]
+            updated = Trip.objects.filter(pk__in=expired_ids).update(status=Trip.STATUS_COMPLETED)
             
             # Логируем для мониторинга
             if updated > 0:

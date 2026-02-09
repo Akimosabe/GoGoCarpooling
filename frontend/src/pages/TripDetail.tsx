@@ -12,7 +12,7 @@ import {
   userBookings,
 } from '@/api'
 import type { Trip, Booking, SeatPassenger } from '@/api/types'
-import { formatDate, getAvatarUrl } from '@/lib/utils'
+import { formatTripDeparture, getAvatarUrl } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -212,7 +212,7 @@ export function TripDetail() {
               </span>
             </div>
             <p className="mt-3 text-base font-medium text-slate-800">
-              {formatDate(trip.departure_datetime)}
+              {formatTripDeparture(trip.departure_datetime, trip.departure_datetime_display)}
             </p>
           </div>
           <div className="text-right">
@@ -401,15 +401,29 @@ export function TripDetail() {
 
       {isDriver && (
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setEditMode(!editMode)}
-            className="gap-1.5"
-          >
-            <Pencil className="h-4 w-4" />
-            Редактировать
-          </Button>
+          {trip.effective_status === 'active' && !trip.is_expired && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditMode(!editMode)}
+                className="gap-1.5"
+              >
+                <Pencil className="h-4 w-4" />
+                Редактировать
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleCancelTrip}
+                disabled={submitting}
+                className="gap-1.5"
+              >
+                <Trash2 className="h-4 w-4" />
+                Отменить поездку
+              </Button>
+            </>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -419,20 +433,10 @@ export function TripDetail() {
             <Copy className="h-4 w-4" />
             Копировать поездку
           </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={handleCancelTrip}
-            disabled={submitting}
-            className="gap-1.5"
-          >
-            <Trash2 className="h-4 w-4" />
-            Отменить поездку
-          </Button>
         </div>
       )}
 
-      {editMode && isDriver && (
+      {editMode && isDriver && trip.effective_status === 'active' && !trip.is_expired && (
         <Card className="mt-4">
           <h3 className="mb-4 font-semibold">Изменение параметров</h3>
           <div className="grid gap-4 sm:grid-cols-2">

@@ -34,6 +34,15 @@ export function formatDate(s: string | null | undefined): string {
   })
 }
 
+/** Для поездок: показывать время в поясе города отправления (как ввёл водитель), иначе — formatDate. */
+export function formatTripDeparture(
+  departureIso: string | null | undefined,
+  displayLocal?: string | null
+): string {
+  if (displayLocal != null && displayLocal !== '') return displayLocal
+  return formatDate(departureIso)
+}
+
 export function formatDateOnly(s: string | null | undefined): string {
   if (s == null || s === '') return INVALID_DATE_LABEL
   const d = parseDateLike(String(s).trim())

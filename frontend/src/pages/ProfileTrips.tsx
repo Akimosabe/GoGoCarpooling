@@ -4,7 +4,7 @@ import { Archive, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { myTripsPage, userBookingsPage } from '@/api'
 import type { Trip, Booking } from '@/api/types'
-import { formatDate } from '@/lib/utils'
+import { formatTripDeparture } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
 import { TripOptionIcons } from '@/components/TripOptionIcons'
 import { Button } from '@/components/ui/Button'
@@ -15,7 +15,7 @@ const PAGE_SIZE = 10
 type Tab = 'driver' | 'passenger'
 
 export function ProfileTrips() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('driver')
 
@@ -52,6 +52,7 @@ export function ProfileTrips() {
   }, [])
 
   useEffect(() => {
+    if (authLoading) return
     if (!user) {
       navigate('/auth')
       return
@@ -61,7 +62,7 @@ export function ProfileTrips() {
     } else {
       loadPassengerActive(activeBookingsPage)
     }
-  }, [user, navigate, tab, activePage, activeBookingsPage, loadDriverActive, loadPassengerActive])
+  }, [user, authLoading, navigate, tab, activePage, activeBookingsPage, loadDriverActive, loadPassengerActive])
 
   const renderTripCard = (t: Trip) => {
     const price = typeof t.price === 'string' ? parseFloat(t.price) : t.price
@@ -74,7 +75,7 @@ export function ProfileTrips() {
               {t.destination.display_name ?? t.destination.name}
             </span>
             <span className="text-base font-semibold text-slate-800">
-              {formatDate(t.departure_datetime)}
+              {formatTripDeparture(t.departure_datetime, t.departure_datetime_display)}
             </span>
           </div>
           <p className="mt-2 text-sm text-slate-600">
@@ -97,7 +98,7 @@ export function ProfileTrips() {
               {b.trip.destination.display_name ?? b.trip.destination.name}
             </span>
             <span className="text-base font-semibold text-slate-800">
-              {formatDate(b.trip.departure_datetime)}
+              {formatTripDeparture(b.trip.departure_datetime, b.trip.departure_datetime_display)}
             </span>
           </div>
           <p className="mt-2 text-sm text-slate-600">
@@ -154,6 +155,13 @@ export function ProfileTrips() {
     )
   }
 
+  if (authLoading) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-12 text-center text-slate-500">
+        Загрузка…
+      </div>
+    )
+  }
   if (!user) return null
 
   return (

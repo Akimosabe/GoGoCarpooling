@@ -1,3 +1,4 @@
+import pytz
 from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -113,12 +114,16 @@ class Trip(models.Model):
     @property
     def is_expired(self):
         """
-        Проверяет, истекла ли дата поездки.
-        
-        departure_datetime хранится в UTC с учётом часового пояса города отправления,
-        поэтому простое сравнение с timezone.now() (тоже UTC) корректно.
+        Проверяет, истекла ли дата поездки по времени города ОТКУДА (origin).
+        Сравниваем: «сейчас в городе отправления» и «время выезда в городе отправления».
         """
-        return self.departure_datetime < timezone.now()
+        now_utc = timezone.now()
+        if not getattr(self, 'origin_id', None) or not self.origin_id:
+            return self.departure_datetime < now_utc
+        origin_tz = pytz.timezone(self.origin.timezone)
+        now_in_origin = now_utc.astimezone(origin_tz)
+        departure_in_origin = self.departure_datetime.astimezone(origin_tz)
+        return departure_in_origin < now_in_origin
     
     @property
     def effective_status(self):
