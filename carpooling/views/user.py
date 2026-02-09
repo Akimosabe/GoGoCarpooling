@@ -21,10 +21,10 @@ def user_profile(request, user_id):
         return Response({"message": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 
-@api_view(['PUT'])
+@api_view(['PUT', 'POST'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
-    """Обновление профиля текущего пользователя"""
+    """Обновление профиля текущего пользователя. POST — для загрузки аватарки (multipart), PUT — без файла."""
     serializer = UserProfileSerializer(
         request.user, 
         data=request.data, 

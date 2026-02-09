@@ -22,7 +22,7 @@ export async function updateProfile(data: UpdateProfilePayload) {
   const headers: Record<string, string> = {}
   if (csrf) headers['X-CSRFToken'] = decodeURIComponent(csrf)
   const res = await fetch('/api/profile/update/', {
-    method: 'PUT',
+    method: 'POST',
     credentials: 'include',
     headers,
     body: form,
