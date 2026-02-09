@@ -44,3 +44,16 @@ export function formatDateOnly(s: string | null | undefined): string {
     year: 'numeric',
   })
 }
+
+/** Сегодня в формате YYYY-MM-DD для input type="date" */
+export function getTodayISO(): string {
+  const d = new Date()
+  return d.toISOString().slice(0, 10)
+}
+
+/** Сегодня + 90 дней (3 месяца) в формате YYYY-MM-DD */
+export function getSearchMaxDateISO(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 90)
+  return d.toISOString().slice(0, 10)
+}

@@ -4,9 +4,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { createTrip, carList } from '@/api'
 import type { Car as CarType } from '@/api/types'
 import { CityAutocomplete } from '@/components/CityAutocomplete'
+import { DatePicker } from '@/components/DatePicker'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { getTodayISO, getSearchMaxDateISO } from '@/lib/utils'
 
 export function CreateTrip() {
   const navigate = useNavigate()
@@ -21,7 +23,7 @@ export function CreateTrip() {
   const [destination, setDestination] = useState('')
   const [originId, setOriginId] = useState<number | null>(null)
   const [destId, setDestId] = useState<number | null>(null)
-  const [departureDate, setDepartureDate] = useState('')
+  const [departureDate, setDepartureDate] = useState(getTodayISO())
   const [departureTime, setDepartureTime] = useState('')
   const [price, setPrice] = useState('')
   const [totalSeats, setTotalSeats] = useState(3)
@@ -130,10 +132,12 @@ export function CreateTrip() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm text-slate-600">Дата</label>
-              <Input
-                type="date"
+              <DatePicker
                 value={departureDate}
-                onChange={(e) => setDepartureDate(e.target.value)}
+                onChange={setDepartureDate}
+                min={getTodayISO()}
+                max={getSearchMaxDateISO()}
+                placeholder="Выберите дату"
                 required
               />
             </div>
