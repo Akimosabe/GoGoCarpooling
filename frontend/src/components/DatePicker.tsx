@@ -8,8 +8,12 @@ const MONTHS_RU = [
 ]
 const WEEKDAYS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
-function toISO(date: Date): string {
-  return date.toISOString().slice(0, 10)
+/** YYYY-MM-DD в локальной дате (без перевода в UTC, чтобы последний день месяца не перескакивал) */
+function toLocalDateString(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 function formatDisplay(iso: string): string {
@@ -31,7 +35,7 @@ function getMonthGrid(year: number, month: number): (string | null)[] {
   const grid: (string | null)[] = []
   for (let i = 0; i < startOffset; i++) grid.push(null)
   for (let d = 1; d <= daysInMonth; d++) {
-    grid.push(toISO(new Date(year, month, d)))
+    grid.push(toLocalDateString(new Date(year, month, d)))
   }
   return grid
 }
@@ -182,7 +186,7 @@ export function DatePicker({
                     isSelected && !disabled && 'bg-green-500 text-white hover:bg-green-600'
                   )}
                 >
-                  {new Date(iso + 'T12:00:00').getDate()}
+                  {parseInt(iso.slice(8, 10), 10)}
                 </button>
               )
             })}
