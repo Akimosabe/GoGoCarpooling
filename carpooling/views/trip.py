@@ -13,7 +13,7 @@ from carpooling.serializers import (
     TripListSerializer, TripDetailSerializer, TripCreateUpdateSerializer
 )
 from carpooling.pagination import paginate_queryset
-from .utils import create_notification
+from .utils import create_notification, _trip_datetime_for_message
 
 
 @api_view(['GET'])
@@ -164,13 +164,19 @@ def edit_trip(request, trip_id):
         
         # Уведомляем всех пассажиров об изменении
         from carpooling.models import Booking
+        route = f"{trip.origin.name} → {trip.destination.name}"
+        dt_str = _trip_datetime_for_message(trip)
+        msg = f"Поездка {route}"
+        if dt_str:
+            msg += f" ({dt_str})"
+        msg += " была обновлена"
         bookings = trip.bookings.filter(status=Booking.STATUS_CONFIRMED)
         for booking in bookings:
             create_notification(
                 user=booking.passenger,
                 notification_type=Notification.TYPE_TRIP_UPDATED,
                 title="Поездка обновлена",
-                message=f"Поездка {trip.origin.name} → {trip.destination.name} была обновлена",
+                message=msg,
                 trip=trip
             )
         
@@ -183,7 +189,7 @@ def edit_trip(request, trip_id):
 def cancel_trip(request, trip_id):
     """Отмена поездки (только водитель). Поездка переходит в архив (status=cancelled), не удаляется."""
     try:
-        trip = Trip.objects.get(id=trip_id, driver=request.user)
+        trip = Trip.objects.select_related('origin', 'destination').get(id=trip_id, driver=request.user)
     except Trip.DoesNotExist:
         return Response({
             "message": "Поездка не найдена или вы не являетесь водителем"
@@ -207,13 +213,19 @@ def cancel_trip(request, trip_id):
             booking.save()
             to_notify.append(booking)
     # Уведомления отправляем после коммита, чтобы сбой Celery/Redis не откатывал отмену
+    route = f"{trip.origin.name} → {trip.destination.name}"
+    dt_str = _trip_datetime_for_message(trip)
+    msg = f"Поездка {route}"
+    if dt_str:
+        msg += f" ({dt_str})"
+    msg += " была отменена водителем"
     for booking in to_notify:
         try:
             create_notification(
                 user=booking.passenger,
                 notification_type=Notification.TYPE_TRIP_CANCELLED,
                 title="Поездка отменена",
-                message=f"Поездка {trip.origin.name} → {trip.destination.name} была отменена водителем",
+                message=msg,
                 trip=trip,
                 booking=booking,
             )

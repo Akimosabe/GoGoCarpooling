@@ -12,7 +12,7 @@ from carpooling.serializers import (
     BookingListSerializer, BookingDetailSerializer, BookingCreateSerializer
 )
 from carpooling.pagination import paginate_queryset
-from .utils import create_notification
+from .utils import create_notification, _trip_datetime_for_message
 
 
 @api_view(['POST'])
@@ -90,12 +90,18 @@ def book_seat(request, trip_id):
             trip.available_seats -= seats_count
             trip.save()
             
-            # Уведомляем водителя о новом бронировании
+            # Уведомляем водителя о новом бронировании (1 место, 2-4 места, 5-9 мест)
+            route = f"{trip.origin.name} → {trip.destination.name}"
+            dt_str = _trip_datetime_for_message(trip)
+            seats_word = "место" if seats_count == 1 else "места" if 2 <= seats_count <= 4 else "мест"
+            msg = f"{request.user.first_name or request.user.email} забронировал {seats_count} {seats_word} в поездке {route}"
+            if dt_str:
+                msg += f" ({dt_str})"
             create_notification(
                 user=trip.driver,
                 notification_type=Notification.TYPE_BOOKING_NEW,
                 title="Новое бронирование",
-                message=f"{request.user.first_name or request.user.email} забронировал {seats_count} мест в поездке {trip.origin.name} → {trip.destination.name}",
+                message=msg,
                 trip=trip,
                 booking=booking
             )
@@ -145,12 +151,18 @@ def cancel_booking(request, booking_id):
         booking.save()
         
         # Уведомляем водителя об отмене
+        t = booking.trip
+        route = f"{t.origin.name} → {t.destination.name}"
+        dt_str = _trip_datetime_for_message(t)
+        msg = f"{request.user.first_name or request.user.email} отменил бронирование в поездке {route}"
+        if dt_str:
+            msg += f" ({dt_str})"
         create_notification(
-            user=booking.trip.driver,
+            user=t.driver,
             notification_type=Notification.TYPE_BOOKING_CANCELLED,
             title="Бронирование отменено",
-            message=f"{request.user.first_name or request.user.email} отменил бронирование в поездке {booking.trip.origin.name} → {booking.trip.destination.name}",
-            trip=booking.trip,
+            message=msg,
+            trip=t,
             booking=booking
         )
     
@@ -191,12 +203,19 @@ def reject_booking(request, booking_id):
         booking.save()
         
         # Уведомляем пассажира об отклонении
+        t = booking.trip
+        route = f"{t.origin.name} → {t.destination.name}"
+        dt_str = _trip_datetime_for_message(t)
+        msg = f"Ваше бронирование в поездке {route}"
+        if dt_str:
+            msg += f" ({dt_str})"
+        msg += " было отклонено водителем"
         create_notification(
             user=booking.passenger,
             notification_type=Notification.TYPE_BOOKING_REJECTED,
             title="Бронирование отклонено",
-            message=f"Ваше бронирование в поездке {booking.trip.origin.name} → {booking.trip.destination.name} было отклонено водителем",
-            trip=booking.trip,
+            message=msg,
+            trip=t,
             booking=booking
         )
     

@@ -26,7 +26,10 @@ export function Header() {
   }, [])
 
   useEffect(() => {
-    if (user) load()
+    if (!user) return
+    load()
+    const interval = setInterval(load, 15000) // обновление уведомлений каждые 15 с
+    return () => clearInterval(interval)
   }, [user, load])
 
   const markRead = async (id: number) => {
