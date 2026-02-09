@@ -18,10 +18,10 @@ class CarSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    """Сериализатор профиля пользователя (полный)"""
+    """Сериализатор профиля пользователя (полный). phone — редактируемое поле при обновлении своего профиля."""
     average_rating = serializers.ReadOnlyField()
     total_ratings_count = serializers.ReadOnlyField()
-    phone = serializers.SerializerMethodField()
+    phone = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     cars = CarSerializer(many=True, read_only=True)
     
     class Meta:
@@ -36,39 +36,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'id', 'email', 'trips_as_driver', 'trips_as_passenger', 
             'created_at', 'updated_at'
         ]
-    
-    def get_phone(self, obj):
-        """Показываем телефон только владельцу, водителю поездки или забронированному пассажиру"""
-        request = self.context.get('request')
-        
-        # Если нет request или пользователь не авторизован
-        if not request or not request.user.is_authenticated:
-            return None
-        
-        # Показываем владельцу профиля
-        if obj == request.user:
-            return obj.phone
-        
-        # Проверяем, есть ли общие поездки
-        
-        # Если запрашивающий - водитель, а владелец профиля - его пассажир
-        driver_trips = Trip.objects.filter(
-            driver=request.user,
-            bookings__passenger=obj,
-            bookings__status=Booking.STATUS_CONFIRMED
-        ).exists()
-        
-        # Если запрашивающий - пассажир, а владелец профиля - водитель его поездки
-        passenger_trips = Trip.objects.filter(
-            driver=obj,
-            bookings__passenger=request.user,
-            bookings__status=Booking.STATUS_CONFIRMED
-        ).exists()
-        
-        if driver_trips or passenger_trips:
-            return obj.phone
-        
-        return None
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
