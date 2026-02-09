@@ -60,6 +60,10 @@ export async function cancelTrip(id: number) {
   return post<{ message: string }>(`/api/trips/${id}/cancel/`)
 }
 
+/** Backend returns paginated { results: Trip[] }; normalize to array */
 export async function myTrips() {
-  return get<Trip[]>('/api/my-trips/')
+  const data = await get<unknown>('/api/my-trips/')
+  if (Array.isArray(data)) return data
+  const obj = data as { results?: Trip[] }
+  return Array.isArray(obj?.results) ? obj.results : []
 }

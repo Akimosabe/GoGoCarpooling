@@ -6,6 +6,7 @@ import { Auth } from '@/pages/Auth'
 import { Profile } from '@/pages/Profile'
 import { ProfileSettings } from '@/pages/ProfileSettings'
 import { ProfileCars } from '@/pages/ProfileCars'
+import { ProfileTrips } from '@/pages/ProfileTrips'
 import { SearchResults } from '@/pages/SearchResults'
 import { TripDetail } from '@/pages/TripDetail'
 import { CreateTrip } from '@/pages/CreateTrip'
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="trips/:id" element={<TripDetail />} />
             <Route path="profile/settings" element={<ProfileSettings />} />
             <Route path="profile/cars" element={<ProfileCars />} />
+            <Route path="profile/trips" element={<ProfileTrips />} />
             <Route path="profile" element={<Profile />} />
             <Route path="profile/:id" element={<Profile />} />
           </Route>

@@ -61,8 +61,11 @@ export function Profile() {
         })
         if (isOwner) {
           const [t, b] = await Promise.all([myTrips(), userBookings()])
-          setTrips(Array.isArray(t) ? t : [])
-          setBookings(Array.isArray(b) ? b : [])
+          setTrips(t)
+          setBookings(b)
+          const hasActiveDriver = t.some((tr) => tr.effective_status === 'active' && !tr.is_expired)
+          const hasActivePassenger = b.some((bk) => bk.trip.effective_status === 'active' && !bk.trip.is_expired)
+          setTab(hasActiveDriver ? 'driver' : hasActivePassenger ? 'passenger' : 'driver')
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки')
@@ -299,7 +302,7 @@ export function Profile() {
 
       {isOwner && (trips.length > 0 || bookings.length > 0) && (
         <div className="mt-8">
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setTab('driver')}
@@ -324,57 +327,58 @@ export function Profile() {
             >
               Пассажир
             </button>
+            <Link
+              to="/profile/trips"
+              className="ml-auto text-sm font-medium text-green-600 hover:underline"
+            >
+              Все поездки
+            </Link>
           </div>
           <div className="space-y-3">
             {tab === 'driver' &&
-              trips.map((t) => (
-                <Link key={t.id} to={`/trips/${t.id}`}>
-                  <Card className="transition hover:shadow-md">
-                    <div className="flex flex-wrap justify-between gap-2">
-                      <span className="text-slate-700">
-                        {t.origin.display_name ?? t.origin.name} →{' '}
-                        {t.destination.display_name ?? t.destination.name}
-                      </span>
-                      <span className="text-sm text-slate-500">
-                        {formatDate(t.departure_datetime)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {t.available_seats} / {t.total_seats} мест ·{' '}
-                      {(
-                        typeof t.price === 'string'
-                          ? parseFloat(t.price)
-                          : t.price
-                      ).toLocaleString('ru-RU')}{' '}
-                      ₽
-                    </p>
-                  </Card>
-                </Link>
-              ))}
+              trips.map((t) => {
+                const price = typeof t.price === 'string' ? parseFloat(t.price) : t.price
+                return (
+                  <Link key={t.id} to={`/trips/${t.id}`}>
+                    <Card className="transition hover:shadow-md">
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <span className="font-medium text-slate-800">
+                          {t.origin.display_name ?? t.origin.name} →{' '}
+                          {t.destination.display_name ?? t.destination.name}
+                        </span>
+                        <span className="text-base font-semibold text-slate-800">
+                          {formatDate(t.departure_datetime)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600">
+                        {t.available_seats} / {t.total_seats} мест · {price.toLocaleString('ru-RU')} ₽
+                      </p>
+                    </Card>
+                  </Link>
+                )
+              })}
             {tab === 'passenger' &&
-              bookings.map((b) => (
-                <Link key={b.id} to={`/trips/${b.trip.id}`}>
-                  <Card className="transition hover:shadow-md">
-                    <div className="flex flex-wrap justify-between gap-2">
-                      <span className="text-slate-700">
-                        {b.trip.origin.display_name ?? b.trip.origin.name} →{' '}
-                        {b.trip.destination.display_name ?? b.trip.destination.name}
-                      </span>
-                      <span className="text-sm text-slate-500">
-                        {formatDate(b.trip.departure_datetime)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {b.seats_count} мест · Статус:{' '}
-                      {b.status === 'confirmed'
-                        ? 'подтверждено'
-                        : b.status === 'pending'
-                          ? 'ожидание'
-                          : b.status}
-                    </p>
-                  </Card>
-                </Link>
-              ))}
+              bookings.map((b) => {
+                const price = typeof b.trip.price === 'string' ? parseFloat(b.trip.price) : b.trip.price
+                return (
+                  <Link key={b.id} to={`/trips/${b.trip.id}`}>
+                    <Card className="transition hover:shadow-md">
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <span className="font-medium text-slate-800">
+                          {b.trip.origin.display_name ?? b.trip.origin.name} →{' '}
+                          {b.trip.destination.display_name ?? b.trip.destination.name}
+                        </span>
+                        <span className="text-base font-semibold text-slate-800">
+                          {formatDate(b.trip.departure_datetime)}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600">
+                        Забронировано мест: {b.seats_count} · {price.toLocaleString('ru-RU')} ₽
+                      </p>
+                    </Card>
+                  </Link>
+                )
+              })}
           </div>
         </div>
       )}
