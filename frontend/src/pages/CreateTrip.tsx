@@ -8,6 +8,7 @@ import { DatePicker } from '@/components/DatePicker'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { loadLastSearch, saveLastSearch } from '@/lib/lastSearch'
 import { getTodayISO, getSearchMaxDateISO } from '@/lib/utils'
 
 export function CreateTrip() {
@@ -23,6 +24,7 @@ export function CreateTrip() {
   const [destination, setDestination] = useState('')
   const [originId, setOriginId] = useState<number | null>(null)
   const [destId, setDestId] = useState<number | null>(null)
+  const [lastSearch, setLastSearch] = useState(loadLastSearch())
   const [departureDate, setDepartureDate] = useState(getTodayISO())
   const [departureTime, setDepartureTime] = useState('')
   const [price, setPrice] = useState('')
@@ -41,12 +43,22 @@ export function CreateTrip() {
   })
 
   useEffect(() => {
+    setLastSearch(loadLastSearch())
+  }, [])
+
+  useEffect(() => {
     if (!user) {
       navigate('/auth')
       return
     }
     carList()
-      .then(setCars)
+      .then((list) => {
+        setCars(list)
+        if (list.length > 0) {
+          setUseNewCar(false)
+          setCarId(list[0].id)
+        }
+      })
       .catch(() => setCars([]))
       .finally(() => setLoading(false))
   }, [user, navigate])
@@ -59,6 +71,11 @@ export function CreateTrip() {
       return
     }
     const dt = `${departureDate}T${departureTime}:00`
+    const departureMs = new Date(dt).getTime()
+    if (Number.isNaN(departureMs) || departureMs <= Date.now()) {
+      setError('Дата и время отправления должны быть в будущем')
+      return
+    }
     setSubmitting(true)
     try {
       const payload: Parameters<typeof createTrip>[0] = {
@@ -89,6 +106,7 @@ export function CreateTrip() {
         return
       }
       const trip = await createTrip(payload)
+      saveLastSearch(origin, originId, destination, destId)
       navigate(`/trips/${trip.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка создания поездки')
@@ -121,12 +139,22 @@ export function CreateTrip() {
               onChange={setOrigin}
               onSelect={(o) => setOriginId(o.id)}
               placeholder="Откуда"
+              suggestedOption={
+                lastSearch?.origin && lastSearch.originId != null
+                  ? { id: lastSearch.originId, value: lastSearch.origin }
+                  : undefined
+              }
             />
             <CityAutocomplete
               value={destination}
               onChange={setDestination}
               onSelect={(o) => setDestId(o.id)}
               placeholder="Куда"
+              suggestedOption={
+                lastSearch?.destination && lastSearch.destId != null
+                  ? { id: lastSearch.destId, value: lastSearch.destination }
+                  : undefined
+              }
             />
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">

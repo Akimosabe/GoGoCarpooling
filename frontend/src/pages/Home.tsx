@@ -5,37 +5,9 @@ import { CityAutocomplete } from '@/components/CityAutocomplete'
 import { DatePicker } from '@/components/DatePicker'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { loadLastSearch, saveLastSearch } from '@/lib/lastSearch'
 import { cn, getTodayISO, getSearchMaxDateISO } from '@/lib/utils'
 import { HERO_BG_URL } from '@/constants'
-
-const LAST_SEARCH_KEY = 'gogo_last_search'
-
-interface LastSearch {
-  origin: string
-  originId: number | null
-  destination: string
-  destId: number | null
-}
-
-function loadLastSearch(): LastSearch | null {
-  try {
-    const raw = localStorage.getItem(LAST_SEARCH_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as LastSearch
-    if (parsed?.origin != null && parsed?.destination != null) return parsed
-    return null
-  } catch {
-    return null
-  }
-}
-
-function saveLastSearch(origin: string, originId: number | null, destination: string, destId: number | null) {
-  if (!origin && !destination) return
-  localStorage.setItem(
-    LAST_SEARCH_KEY,
-    JSON.stringify({ origin, originId, destination, destId })
-  )
-}
 
 export function Home() {
   const navigate = useNavigate()
