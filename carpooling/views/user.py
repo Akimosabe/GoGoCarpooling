@@ -1,3 +1,5 @@
+import re
+
 from django.db.models import Q
 
 from rest_framework.decorators import api_view, permission_classes
@@ -5,20 +7,70 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from carpooling.models import User, Car, CarCatalog
+from carpooling.models import User, Car, CarCatalog, Booking
 from carpooling.serializers import (
     UserDetailSerializer, UserProfileSerializer, CarSerializer
 )
 
 
+def _mask_phone(phone):
+    """Маска номера: видны только последние 2 цифры, остальное ***"""
+    if not phone or not str(phone).strip():
+        return None
+    s = str(phone).strip()
+    digits = re.findall(r'\d', s)
+    if len(digits) < 2:
+        return '+7 *** *** ** **'
+    visible = ''.join(digits[-2:])
+    return '+7 *** *** ** ' + visible
+
+
+def _mask_email(email):
+    """Маска почты: первый символ + *** @ *** . домен"""
+    if not email or not str(email).strip():
+        return None
+    s = str(email).strip()
+    if '@' not in s:
+        return '***@***.***'
+    local, rest = s.split('@', 1)
+    if not local:
+        return '***@***.***'
+    domain = rest.rsplit('.', 1)
+    tld = domain[-1] if len(domain) > 1 else '***'
+    return f'{local[0]}***@***.{tld}'
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def user_profile(request, user_id):
-    """Получение профиля пользователя"""
+    """Получение профиля пользователя. Номер показываем только себе или при общем бронировании."""
     try:
         user = User.objects.get(id=user_id)
         serializer = UserDetailSerializer(user, context={'request': request})
-        return Response(serializer.data)
+        data = serializer.data
+        # Номер виден: владельцу профиля или тому, кто забронирован в поездку этого пользователя (как водителя)
+        can_see_phone = (
+            request.user.is_authenticated
+            and (
+                request.user.id == user_id
+                or Booking.objects.filter(
+                    trip__driver_id=user_id,
+                    passenger=request.user,
+                    status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_PENDING],
+                ).exists()
+            )
+        )
+        if not can_see_phone and data.get('phone'):
+            data['phone'] = _mask_phone(user.phone)
+            data['phone_masked'] = True
+        else:
+            data['phone_masked'] = False
+        if not can_see_phone and data.get('email'):
+            data['email'] = _mask_email(user.email)
+            data['email_masked'] = True
+        else:
+            data['email_masked'] = False
+        return Response(data)
     except User.DoesNotExist:
         return Response({"message": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 

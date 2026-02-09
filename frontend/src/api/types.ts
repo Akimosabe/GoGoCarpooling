@@ -3,6 +3,10 @@ export interface User {
   email: string
   first_name: string
   phone?: string | null
+  /** true, если номер в ответе замаскирован (виден только владельцу или при общем бронировании) */
+  phone_masked?: boolean
+  /** true, если почта в ответе замаскирована */
+  email_masked?: boolean
   avatar?: string | null
   date_of_birth?: string | null
   trips_as_driver?: number

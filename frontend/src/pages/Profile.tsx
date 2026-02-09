@@ -269,10 +269,38 @@ export function Profile() {
                   )}
                 </div>
                 {profile.phone && (
-                  <p className="mt-1 text-slate-600">{profile.phone}</p>
+                  <p
+                    className={cn(
+                      'mt-1 text-slate-600',
+                      profile.phone_masked && 'select-none blur-sm'
+                    )}
+                    title={profile.phone_masked ? 'Номер виден только при бронировании в поездку этого водителя' : undefined}
+                  >
+                    {profile.phone_masked ? (
+                      profile.phone
+                    ) : (
+                      <a href={`tel:${profile.phone}`} className="text-green-600 hover:underline">
+                        {profile.phone}
+                      </a>
+                    )}
+                  </p>
                 )}
                 {profile.email && (
-                  <p className="text-sm text-slate-500">{profile.email}</p>
+                  <p
+                    className={cn(
+                      'text-sm text-slate-500',
+                      profile.email_masked && 'select-none blur-sm'
+                    )}
+                    title={profile.email_masked ? 'Почта видна только при бронировании в поездку этого водителя' : undefined}
+                  >
+                    {profile.email_masked ? (
+                      profile.email
+                    ) : (
+                      <a href={`mailto:${profile.email}`} className="text-green-600 hover:underline">
+                        {profile.email}
+                      </a>
+                    )}
+                  </p>
                 )}
                 <div className="mt-2 flex items-center gap-1 text-amber-500">
                   <Star className="h-5 w-5 fill-current" />
