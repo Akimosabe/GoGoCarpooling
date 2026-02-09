@@ -6,6 +6,7 @@ import type { Trip, Paginated } from '@/api/types'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { TripOptionIcons } from '@/components/TripOptionIcons'
 
 const MEDIA = '/media'
 
@@ -36,6 +37,7 @@ function TripCard({ t }: { t: Trip }) {
             </div>
           </div>
         </div>
+        <TripOptionIcons trip={t} className="mt-2" />
         <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3">
           {t.driver.avatar ? (
             <img

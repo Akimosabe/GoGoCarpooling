@@ -78,6 +78,18 @@ class Trip(models.Model):
         default=False, 
         verbose_name="Можно с животными"
     )
+    child_seat_available = models.BooleanField(
+        default=False,
+        verbose_name="Детское кресло"
+    )
+    two_rear_seats = models.BooleanField(
+        default=False,
+        verbose_name="2 места на заднем ряду"
+    )
+    parcel_allowed = models.BooleanField(
+        default=False,
+        verbose_name="Можно посылку"
+    )
     luggage_size = models.CharField(
         max_length=20,
         choices=[('small', 'Малый'), ('medium', 'Средний'), ('large', 'Большой')],

@@ -48,7 +48,7 @@ class TripListSerializer(serializers.ModelSerializer):
             'id', 'driver', 'driver_rating', 'car',
             'origin', 'destination', 'departure_datetime',
             'price', 'total_seats', 'available_seats',
-            'smoking_allowed', 'pets_allowed', 'luggage_size',
+            'smoking_allowed', 'pets_allowed', 'child_seat_available', 'two_rear_seats', 'parcel_allowed', 'luggage_size',
             'status', 'effective_status', 'is_expired', 'created_at'
         ]
 
@@ -112,7 +112,7 @@ class TripDetailSerializer(serializers.ModelSerializer):
             'id', 'driver', 'car',
             'origin', 'destination', 'departure_datetime',
             'price', 'total_seats', 'available_seats',
-            'description', 'smoking_allowed', 'pets_allowed', 'luggage_size',
+            'description', 'smoking_allowed', 'pets_allowed', 'child_seat_available', 'two_rear_seats', 'parcel_allowed', 'luggage_size',
             'driver_phone', 'bookings_count', 'seat_passengers',
             'status', 'effective_status', 'is_expired', 'created_at', 'updated_at'
         ]
@@ -211,7 +211,7 @@ class TripCreateUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'car', 'new_car', 'origin', 'destination', 'departure_datetime',
             'price', 'total_seats', 'available_seats',
-            'description', 'smoking_allowed', 'pets_allowed', 'luggage_size'
+            'description', 'smoking_allowed', 'pets_allowed', 'child_seat_available', 'two_rear_seats', 'parcel_allowed', 'luggage_size'
         ]
     
     def validate_total_seats(self, value):

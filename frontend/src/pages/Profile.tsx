@@ -9,6 +9,7 @@ import {
   userBookings,
 } from '@/api'
 import type { User as UserType, Trip, Booking } from '@/api/types'
+import { TripOptionIcons } from '@/components/TripOptionIcons'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -353,6 +354,7 @@ export function Profile() {
                       <p className="mt-2 text-sm text-slate-600">
                         {t.available_seats} / {t.total_seats} мест · {price.toLocaleString('ru-RU')} ₽
                       </p>
+                      <TripOptionIcons trip={t} className="mt-2" />
                     </Card>
                   </Link>
                 )
@@ -375,6 +377,7 @@ export function Profile() {
                       <p className="mt-2 text-sm text-slate-600">
                         Забронировано мест: {b.seats_count} · {price.toLocaleString('ru-RU')} ₽
                       </p>
+                      <TripOptionIcons trip={b.trip} className="mt-2" />
                     </Card>
                   </Link>
                 )

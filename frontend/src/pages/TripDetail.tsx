@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ChevronDown, ChevronUp, MapPin, Pencil, Phone, Trash2, User, Users, Minus, Plus } from 'lucide-react'
+import { Baby, ChevronDown, ChevronUp, Cigarette, Dog, MapPin, Package, Pencil, Phone, Trash2, User, Users, Users2, Minus, Plus } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   tripDetail,
@@ -69,6 +69,9 @@ export function TripDetail() {
           description: t.description ?? '',
           smoking_allowed: t.smoking_allowed,
           pets_allowed: t.pets_allowed,
+          child_seat_available: t.child_seat_available,
+          two_rear_seats: t.two_rear_seats,
+          parcel_allowed: t.parcel_allowed,
           luggage_size: t.luggage_size,
         })
         const b = bookings.find(
@@ -169,6 +172,9 @@ export function TripDetail() {
         description: editForm.description ?? undefined,
         smoking_allowed: editForm.smoking_allowed,
         pets_allowed: editForm.pets_allowed,
+        child_seat_available: editForm.child_seat_available,
+        two_rear_seats: editForm.two_rear_seats,
+        parcel_allowed: editForm.parcel_allowed,
         luggage_size: editForm.luggage_size,
       })
       setTrip(updated)
@@ -230,21 +236,38 @@ export function TripDetail() {
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-          {trip.smoking_allowed && (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
-              Можно курить
-            </span>
-          )}
-          {trip.pets_allowed && (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
-              С животными
-            </span>
-          )}
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
-            Багаж: {trip.luggage_size === 'small' ? 'малый' : trip.luggage_size === 'large' ? 'большой' : 'средний'}
-          </span>
-        </div>
+        <ul className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 text-base">
+          <li
+            className={`flex items-center gap-3 ${trip.smoking_allowed ? 'text-slate-600' : 'text-slate-400 line-through'}`}
+          >
+            <Cigarette className={`h-5 w-5 shrink-0 ${trip.smoking_allowed ? '' : 'opacity-50'}`} />
+            Можно курить
+          </li>
+          <li
+            className={`flex items-center gap-3 ${trip.pets_allowed ? 'text-slate-600' : 'text-slate-400 line-through'}`}
+          >
+            <Dog className={`h-5 w-5 shrink-0 ${trip.pets_allowed ? '' : 'opacity-50'}`} />
+            С животными
+          </li>
+          <li
+            className={`flex items-center gap-3 ${trip.parcel_allowed ? 'text-slate-600' : 'text-slate-400 line-through'}`}
+          >
+            <Package className={`h-5 w-5 shrink-0 ${trip.parcel_allowed ? '' : 'opacity-50'}`} />
+            Посылка
+          </li>
+          <li
+            className={`flex items-center gap-3 ${trip.child_seat_available ? 'text-slate-600' : 'text-slate-400 line-through'}`}
+          >
+            <Baby className={`h-5 w-5 shrink-0 ${trip.child_seat_available ? '' : 'opacity-50'}`} />
+            Детское кресло
+          </li>
+          <li
+            className={`flex items-center gap-3 ${trip.two_rear_seats ? 'text-slate-600' : 'text-slate-400 line-through'}`}
+          >
+            <Users2 className={`h-5 w-5 shrink-0 ${trip.two_rear_seats ? '' : 'opacity-50'}`} />
+            2 места сзади
+          </li>
+        </ul>
 
         <div className="mt-6 flex items-center gap-3 border-t border-slate-100 pt-6">
           {trip.driver.avatar ? (

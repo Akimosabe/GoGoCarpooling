@@ -70,6 +70,9 @@ export interface Trip {
   description?: string | null
   smoking_allowed: boolean
   pets_allowed: boolean
+  child_seat_available: boolean
+  two_rear_seats: boolean
+  parcel_allowed: boolean
   luggage_size: 'small' | 'medium' | 'large'
   status: string
   effective_status: string

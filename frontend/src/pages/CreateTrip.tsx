@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { createTrip, carList } from '@/api'
 import type { Car as CarType } from '@/api/types'
+import { Baby, Cigarette, Dog, Package, Users2 } from 'lucide-react'
 import { CityAutocomplete } from '@/components/CityAutocomplete'
 import { DatePicker } from '@/components/DatePicker'
 import { Button } from '@/components/ui/Button'
@@ -33,7 +34,9 @@ export function CreateTrip() {
   const [description, setDescription] = useState('')
   const [smokingAllowed, setSmokingAllowed] = useState(false)
   const [petsAllowed, setPetsAllowed] = useState(false)
-  const [luggageSize, setLuggageSize] = useState<'small' | 'medium' | 'large'>('medium')
+  const [childSeatAvailable, setChildSeatAvailable] = useState(false)
+  const [twoRearSeats, setTwoRearSeats] = useState(false)
+  const [parcelAllowed, setParcelAllowed] = useState(false)
   const [newCar, setNewCar] = useState({
     brand: '',
     model: '',
@@ -88,7 +91,10 @@ export function CreateTrip() {
         description: description || undefined,
         smoking_allowed: smokingAllowed,
         pets_allowed: petsAllowed,
-        luggage_size: luggageSize,
+        child_seat_available: childSeatAvailable,
+        two_rear_seats: twoRearSeats,
+        parcel_allowed: parcelAllowed,
+        luggage_size: 'medium',
       }
       if (useNewCar) {
         payload.new_car = {
@@ -343,13 +349,14 @@ export function CreateTrip() {
               placeholder="Удобства, остановки по пути…"
             />
           </div>
-          <div className="mt-4 flex flex-wrap gap-4">
+          <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
             <label className="flex cursor-pointer items-center gap-2">
               <input
                 type="checkbox"
                 checked={smokingAllowed}
                 onChange={(e) => setSmokingAllowed(e.target.checked)}
               />
+              <Cigarette className="h-4 w-4 text-slate-600" aria-hidden />
               <span className="text-sm">Курение</span>
             </label>
             <label className="flex cursor-pointer items-center gap-2">
@@ -358,22 +365,36 @@ export function CreateTrip() {
                 checked={petsAllowed}
                 onChange={(e) => setPetsAllowed(e.target.checked)}
               />
+              <Dog className="h-4 w-4 text-slate-600" aria-hidden />
               <span className="text-sm">С животными</span>
             </label>
-          </div>
-          <div className="mt-4">
-            <label className="mb-1 block text-sm text-slate-600">Багаж</label>
-            <select
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 sm:w-40"
-              value={luggageSize}
-              onChange={(e) =>
-                setLuggageSize(e.target.value as 'small' | 'medium' | 'large')
-              }
-            >
-              <option value="small">Малый</option>
-              <option value="medium">Средний</option>
-              <option value="large">Большой</option>
-            </select>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={childSeatAvailable}
+                onChange={(e) => setChildSeatAvailable(e.target.checked)}
+              />
+              <Baby className="h-4 w-4 text-slate-600" aria-hidden />
+              <span className="text-sm">Детское кресло</span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={twoRearSeats}
+                onChange={(e) => setTwoRearSeats(e.target.checked)}
+              />
+              <Users2 className="h-4 w-4 text-slate-600" aria-hidden />
+              <span className="text-sm">2 места сзади</span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={parcelAllowed}
+                onChange={(e) => setParcelAllowed(e.target.checked)}
+              />
+              <Package className="h-4 w-4 text-slate-600" aria-hidden />
+              <span className="text-sm">Посылка</span>
+            </label>
           </div>
         </Card>
 

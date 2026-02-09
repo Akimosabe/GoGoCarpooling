@@ -5,6 +5,7 @@ import { myTrips, userBookings } from '@/api'
 import type { Trip, Booking } from '@/api/types'
 import { formatDate } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
+import { TripOptionIcons } from '@/components/TripOptionIcons'
 import { cn } from '@/lib/utils'
 
 type Tab = 'driver' | 'passenger'
@@ -69,6 +70,7 @@ export function ProfileTrips() {
           <p className="mt-2 text-sm text-slate-600">
             {t.available_seats} / {t.total_seats} мест · {price.toLocaleString('ru-RU')} ₽
           </p>
+          <TripOptionIcons trip={t} className="mt-2" />
         </Card>
       </Link>
     )
@@ -91,6 +93,7 @@ export function ProfileTrips() {
           <p className="mt-2 text-sm text-slate-600">
             Забронировано мест: {b.seats_count} · {price.toLocaleString('ru-RU')} ₽
           </p>
+          <TripOptionIcons trip={b.trip} className="mt-2" />
         </Card>
       </Link>
     )

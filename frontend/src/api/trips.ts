@@ -43,6 +43,9 @@ export interface TripCreateUpdate {
   description?: string
   smoking_allowed?: boolean
   pets_allowed?: boolean
+  child_seat_available?: boolean
+  two_rear_seats?: boolean
+  parcel_allowed?: boolean
   luggage_size?: 'small' | 'medium' | 'large'
 }
 
