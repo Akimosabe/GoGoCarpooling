@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { createTrip, carList } from '@/api'
-import type { Car as CarType } from '@/api/types'
+import type { Car as CarType, Trip } from '@/api/types'
 import { Baby, Cigarette, Dog, Package, Users2 } from 'lucide-react'
 import { CityAutocomplete } from '@/components/CityAutocomplete'
 import { DatePicker } from '@/components/DatePicker'
@@ -13,8 +13,10 @@ import { loadLastSearch, saveLastSearch } from '@/lib/lastSearch'
 import { getTodayISO, getSearchMaxDateISO } from '@/lib/utils'
 
 export function CreateTrip() {
+  const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const copyFromTrip = (location.state as { copyFromTrip?: Trip } | null)?.copyFromTrip
   const [cars, setCars] = useState<CarType[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -61,10 +63,32 @@ export function CreateTrip() {
           setUseNewCar(false)
           setCarId(list[0].id)
         }
+        if (copyFromTrip) {
+          const t = copyFromTrip
+          const originDisplay = t.origin.display_name ?? `${t.origin.name}, ${t.origin.region}`
+          const destDisplay = t.destination.display_name ?? `${t.destination.name}, ${t.destination.region}`
+          setOrigin(originDisplay)
+          setOriginId(t.origin.id)
+          setDestination(destDisplay)
+          setDestId(t.destination.id)
+          setPrice(typeof t.price === 'string' ? t.price : String(t.price))
+          setTotalSeats(t.total_seats)
+          setAvailableSeats(t.available_seats)
+          setDescription(t.description ?? '')
+          setSmokingAllowed(t.smoking_allowed)
+          setPetsAllowed(t.pets_allowed)
+          setChildSeatAvailable(t.child_seat_available)
+          setTwoRearSeats(t.two_rear_seats)
+          setParcelAllowed(t.parcel_allowed)
+          if (t.car?.id && list.some((c) => c.id === t.car!.id)) {
+            setCarId(t.car.id)
+            setUseNewCar(false)
+          }
+        }
       })
       .catch(() => setCars([]))
       .finally(() => setLoading(false))
-  }, [user, navigate])
+  }, [user, navigate, copyFromTrip])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Baby, ChevronDown, ChevronUp, Cigarette, Dog, MapPin, Package, Pencil, Phone, Trash2, User, Users, Users2, Minus, Plus } from 'lucide-react'
+import { Baby, ChevronDown, ChevronUp, Copy, Cigarette, Dog, MapPin, Package, Pencil, Phone, Trash2, User, Users, Users2, Minus, Plus } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   tripDetail,
@@ -411,6 +411,15 @@ export function TripDetail() {
           >
             <Pencil className="h-4 w-4" />
             Редактировать
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/trips/create', { state: { copyFromTrip: trip } })}
+            className="gap-1.5"
+          >
+            <Copy className="h-4 w-4" />
+            Копировать поездку
           </Button>
           <Button
             variant="danger"
