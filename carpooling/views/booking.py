@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.db import IntegrityError
+from django.db.models import Q
+from django.utils import timezone
 
 from carpooling.models import Trip, Booking, User, Notification
 from carpooling.serializers import (
@@ -204,11 +206,24 @@ def reject_booking(request, booking_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_bookings(request):
-    """Получение всех бронирований текущего пользователя"""
+    """Бронирования текущего пользователя. ?archive=1 — только архив. Сортировка по дате поездки: новые сверху."""
+    now = timezone.now()
     bookings = Booking.objects.filter(
         passenger=request.user
-    ).select_related('trip', 'trip__driver', 'trip__origin', 'trip__destination').order_by('-created_at')
-    
+    ).select_related('trip', 'trip__driver', 'trip__origin', 'trip__destination')
+    archive = request.query_params.get('archive', '').lower() in ('1', 'true', 'yes')
+    if archive:
+        bookings = bookings.filter(
+            Q(trip__status__in=[Trip.STATUS_CANCELLED, Trip.STATUS_COMPLETED]) |
+            Q(trip__status=Trip.STATUS_ACTIVE, trip__departure_datetime__lt=now)
+        )
+        bookings = bookings.order_by('-trip__departure_datetime')
+    else:
+        bookings = bookings.filter(
+            trip__status=Trip.STATUS_ACTIVE,
+            trip__departure_datetime__gte=now
+        )
+        bookings = bookings.order_by('trip__departure_datetime')
     return paginate_queryset(request, bookings, BookingListSerializer)
 
 

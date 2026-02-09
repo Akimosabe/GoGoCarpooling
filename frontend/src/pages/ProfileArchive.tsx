@@ -14,40 +14,40 @@ const PAGE_SIZE = 10
 
 type Tab = 'driver' | 'passenger'
 
-export function ProfileTrips() {
+export function ProfileArchive() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('driver')
 
-  const [activeTrips, setActiveTrips] = useState<Trip[]>([])
-  const [activeCount, setActiveCount] = useState(0)
-  const [activePage, setActivePage] = useState(1)
-  const [activeLoading, setActiveLoading] = useState(false)
+  const [archiveTrips, setArchiveTrips] = useState<Trip[]>([])
+  const [archiveCount, setArchiveCount] = useState(0)
+  const [archivePage, setArchivePage] = useState(1)
+  const [archiveLoading, setArchiveLoading] = useState(false)
 
-  const [activeBookings, setActiveBookings] = useState<Booking[]>([])
-  const [activeBookingsCount, setActiveBookingsCount] = useState(0)
-  const [activeBookingsPage, setActiveBookingsPage] = useState(1)
-  const [activeBookingsLoading, setActiveBookingsLoading] = useState(false)
+  const [archiveBookings, setArchiveBookings] = useState<Booking[]>([])
+  const [archiveBookingsCount, setArchiveBookingsCount] = useState(0)
+  const [archiveBookingsPage, setArchiveBookingsPage] = useState(1)
+  const [archiveBookingsLoading, setArchiveBookingsLoading] = useState(false)
 
-  const loadDriverActive = useCallback(async (page: number) => {
-    setActiveLoading(true)
+  const loadDriverArchive = useCallback(async (page: number) => {
+    setArchiveLoading(true)
     try {
-      const data = await myTripsPage({ archive: false, page, page_size: PAGE_SIZE })
-      setActiveTrips(data.results)
-      setActiveCount(data.count)
+      const data = await myTripsPage({ archive: true, page, page_size: PAGE_SIZE })
+      setArchiveTrips(data.results)
+      setArchiveCount(data.count)
     } finally {
-      setActiveLoading(false)
+      setArchiveLoading(false)
     }
   }, [])
 
-  const loadPassengerActive = useCallback(async (page: number) => {
-    setActiveBookingsLoading(true)
+  const loadPassengerArchive = useCallback(async (page: number) => {
+    setArchiveBookingsLoading(true)
     try {
-      const data = await userBookingsPage({ archive: false, page, page_size: PAGE_SIZE })
-      setActiveBookings(data.results)
-      setActiveBookingsCount(data.count)
+      const data = await userBookingsPage({ archive: true, page, page_size: PAGE_SIZE })
+      setArchiveBookings(data.results)
+      setArchiveBookingsCount(data.count)
     } finally {
-      setActiveBookingsLoading(false)
+      setArchiveBookingsLoading(false)
     }
   }, [])
 
@@ -57,11 +57,11 @@ export function ProfileTrips() {
       return
     }
     if (tab === 'driver') {
-      loadDriverActive(activePage)
+      loadDriverArchive(archivePage)
     } else {
-      loadPassengerActive(activeBookingsPage)
+      loadPassengerArchive(archiveBookingsPage)
     }
-  }, [user, navigate, tab, activePage, activeBookingsPage, loadDriverActive, loadPassengerActive])
+  }, [user, navigate, tab, archivePage, archiveBookingsPage, loadDriverArchive, loadPassengerArchive])
 
   const renderTripCard = (t: Trip) => {
     const price = typeof t.price === 'string' ? parseFloat(t.price) : t.price
@@ -159,9 +159,12 @@ export function ProfileTrips() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Мои поездки</h1>
-        <Link to="/profile" className="text-sm font-medium text-green-600 hover:underline">
-          ← В профиль
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+          <Archive className="h-7 w-7 text-slate-500" aria-hidden />
+          Архив поездок
+        </h1>
+        <Link to="/profile/trips" className="text-sm font-medium text-green-600 hover:underline">
+          ← Все поездки
         </Link>
       </div>
 
@@ -192,68 +195,55 @@ export function ProfileTrips() {
         </button>
       </div>
 
+      <p className="mb-4 text-sm text-slate-500">
+        Отменённые и завершённые поездки. Сортировка: новые сверху.
+      </p>
+
       {tab === 'driver' && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Активные
-          </h2>
-          {activeLoading ? (
+          {archiveLoading ? (
             <p className="py-6 text-center text-slate-500">Загрузка…</p>
-          ) : activeTrips.length > 0 ? (
+          ) : archiveTrips.length > 0 ? (
             <>
               <div className="space-y-3">
-                {activeTrips.map(renderTripCard)}
+                {archiveTrips.map(renderTripCard)}
               </div>
               <Pagination
-                page={activePage}
-                count={activeCount}
+                page={archivePage}
+                count={archiveCount}
                 pageSize={PAGE_SIZE}
-                onPageChange={setActivePage}
-                loading={activeLoading}
+                onPageChange={setArchivePage}
+                loading={archiveLoading}
               />
             </>
           ) : (
-            <p className="py-6 text-center text-slate-500">Нет активных поездок</p>
+            <p className="py-8 text-center text-slate-500">В архиве водителя пока нет поездок</p>
           )}
         </section>
       )}
 
       {tab === 'passenger' && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Активные
-          </h2>
-          {activeBookingsLoading ? (
+          {archiveBookingsLoading ? (
             <p className="py-6 text-center text-slate-500">Загрузка…</p>
-          ) : activeBookings.length > 0 ? (
+          ) : archiveBookings.length > 0 ? (
             <>
               <div className="space-y-3">
-                {activeBookings.map(renderBookingCard)}
+                {archiveBookings.map(renderBookingCard)}
               </div>
               <Pagination
-                page={activeBookingsPage}
-                count={activeBookingsCount}
+                page={archiveBookingsPage}
+                count={archiveBookingsCount}
                 pageSize={PAGE_SIZE}
-                onPageChange={setActiveBookingsPage}
-                loading={activeBookingsLoading}
+                onPageChange={setArchiveBookingsPage}
+                loading={archiveBookingsLoading}
               />
             </>
           ) : (
-            <p className="py-6 text-center text-slate-500">Нет активных поездок</p>
+            <p className="py-8 text-center text-slate-500">В архиве пассажира пока нет поездок</p>
           )}
         </section>
       )}
-
-      <div className="mt-10 border-t border-slate-200 pt-8">
-        <Link
-          to="/profile/trips/archive"
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-left transition hover:bg-slate-100 hover:border-slate-300"
-        >
-          <Archive className="h-5 w-5 shrink-0 text-slate-500" aria-hidden />
-          <span className="font-medium text-slate-700">Архив поездок</span>
-          <span className="ml-auto text-sm text-slate-500">Открыть →</span>
-        </Link>
-      </div>
     </div>
   )
 }

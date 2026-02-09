@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Car, LogOut, Pencil, Settings, Star, User } from 'lucide-react'
+import { Archive, Car, LogOut, Pencil, Settings, Star, User } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   userProfile,
@@ -63,9 +63,8 @@ export function Profile() {
           const [t, b] = await Promise.all([myTrips(), userBookings()])
           setTrips(t)
           setBookings(b)
-          const hasActiveDriver = t.some((tr) => tr.effective_status === 'active' && !tr.is_expired)
           const hasActivePassenger = b.some((bk) => bk.trip.effective_status === 'active' && !bk.trip.is_expired)
-          setTab(hasActiveDriver ? 'driver' : hasActivePassenger ? 'passenger' : 'driver')
+          setTab(hasActivePassenger ? 'passenger' : 'driver')
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ошибка загрузки')
@@ -399,6 +398,19 @@ export function Profile() {
                 )
               })}
           </div>
+        </div>
+      )}
+
+      {isOwner && (
+        <div className="mt-8 border-t border-slate-200 pt-8">
+          <Link
+            to="/profile/trips/archive"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-left transition hover:bg-slate-100 hover:border-slate-300"
+          >
+            <Archive className="h-5 w-5 shrink-0 text-slate-500" aria-hidden />
+            <span className="font-medium text-slate-700">Архив поездок</span>
+            <span className="ml-auto text-sm text-slate-500">Открыть →</span>
+          </Link>
         </div>
       )}
     </div>

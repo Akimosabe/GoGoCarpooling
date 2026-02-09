@@ -7,6 +7,7 @@ import { Profile } from '@/pages/Profile'
 import { ProfileSettings } from '@/pages/ProfileSettings'
 import { ProfileCars } from '@/pages/ProfileCars'
 import { ProfileTrips } from '@/pages/ProfileTrips'
+import { ProfileArchive } from '@/pages/ProfileArchive'
 import { SearchResults } from '@/pages/SearchResults'
 import { TripDetail } from '@/pages/TripDetail'
 import { CreateTrip } from '@/pages/CreateTrip'
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="profile/settings" element={<ProfileSettings />} />
             <Route path="profile/cars" element={<ProfileCars />} />
             <Route path="profile/trips" element={<ProfileTrips />} />
+            <Route path="profile/trips/archive" element={<ProfileArchive />} />
             <Route path="profile" element={<Profile />} />
             <Route path="profile/:id" element={<Profile />} />
           </Route>

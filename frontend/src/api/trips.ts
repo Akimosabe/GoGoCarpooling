@@ -63,10 +63,29 @@ export async function cancelTrip(id: number) {
   return post<{ message: string }>(`/api/trips/${id}/cancel/`)
 }
 
-/** Backend returns paginated { results: Trip[] }; normalize to array */
-export async function myTrips() {
-  const data = await get<unknown>('/api/my-trips/')
-  if (Array.isArray(data)) return data
-  const obj = data as { results?: Trip[] }
-  return Array.isArray(obj?.results) ? obj.results : []
+export interface MyTripsParams {
+  page?: number
+  page_size?: number
+  archive?: boolean
+}
+
+/** Пагинированный список поездок водителя. archive=true — только архив. Сортировка: новые сверху. */
+export async function myTripsPage(params?: MyTripsParams): Promise<Paginated<Trip>> {
+  const p: Record<string, string> = {}
+  if (params?.page != null) p.page = String(params.page)
+  if (params?.page_size != null) p.page_size = String(params.page_size)
+  if (params?.archive === true) p.archive = '1'
+  const data = await get<Paginated<Trip>>('/api/my-trips/', Object.keys(p).length ? p : undefined)
+  return {
+    count: data?.count ?? 0,
+    next: data?.next ?? null,
+    previous: data?.previous ?? null,
+    results: Array.isArray(data?.results) ? data.results : [],
+  }
+}
+
+/** Первая страница активных поездок (для обратной совместимости) */
+export async function myTrips(): Promise<Trip[]> {
+  const data = await myTripsPage({ page: 1, archive: false })
+  return data.results
 }

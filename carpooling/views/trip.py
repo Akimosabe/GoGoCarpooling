@@ -1,12 +1,14 @@
+import pytz
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from carpooling.models import Trip, User, Notification
+from carpooling.models import Trip, User, Notification, City
 from carpooling.serializers import (
     TripListSerializer, TripDetailSerializer, TripCreateUpdateSerializer
 )
@@ -53,14 +55,34 @@ def trip_list(request):
     
     if date:
         try:
-            # Поддержка обоих форматов даты
             for fmt in ('%d.%m.%Y', '%Y-%m-%d'):
                 try:
                     date_obj = datetime.strptime(date, fmt).date()
-                    trips = trips.filter(departure_datetime__date=date_obj)
                     break
                 except ValueError:
+                    date_obj = None
                     continue
+            else:
+                date_obj = None
+            if date_obj:
+                # Фильтр по дате в часовом поясе города отправления (не UTC),
+                # чтобы при поиске "28 февраля" не попадала поездка с отображением "1 марта"
+                tz_name = 'Europe/Moscow'
+                if origin_id:
+                    try:
+                        city = City.objects.filter(pk=int(origin_id)).values_list('timezone', flat=True).first()
+                        if city:
+                            tz_name = city
+                    except ValueError:
+                        pass
+                tz = pytz.timezone(tz_name)
+                start_local = tz.localize(datetime.combine(date_obj, datetime.min.time()))
+                start_utc = start_local.astimezone(pytz.UTC)
+                end_utc_excl = start_utc + timedelta(days=1)
+                trips = trips.filter(
+                    departure_datetime__gte=start_utc,
+                    departure_datetime__lt=end_utc_excl,
+                )
         except Exception:
             pass
     
@@ -88,6 +110,8 @@ def trip_detail(request, trip_id):
     """Получение детальной информации о поездке"""
     try:
         trip = Trip.objects.select_related('driver', 'car', 'origin', 'destination').get(id=trip_id)
+        # Просроченные активные поездки переводим в «Завершена», чтобы отображались в архиве
+        trip.check_and_complete_if_expired()
         serializer = TripDetailSerializer(trip, context={'request': request})
         return Response(serializer.data)
     except Trip.DoesNotExist:
@@ -145,7 +169,7 @@ def edit_trip(request, trip_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def cancel_trip(request, trip_id):
-    """Отмена поездки (только водитель)"""
+    """Отмена поездки (только водитель). Поездка переходит в архив (status=cancelled), не удаляется."""
     try:
         trip = Trip.objects.get(id=trip_id, driver=request.user)
     except Trip.DoesNotExist:
@@ -182,16 +206,17 @@ def cancel_trip(request, trip_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_trips(request):
-    """Получение поездок текущего пользователя как водителя"""
+    """Поездки текущего пользователя как водителя. ?archive=1 — только архив (отменённые/завершённые). Сортировка: новые сверху."""
+    now = timezone.now()
     trips = Trip.objects.filter(driver=request.user).select_related('car', 'origin', 'destination')
-    
-    # Автоматически завершаем просроченные поездки
-    for trip in trips:
-        trip.check_and_complete_if_expired()
-    
-    # Перезагружаем после возможных изменений и сортируем
-    trips = Trip.objects.filter(driver=request.user).select_related(
-        'car', 'origin', 'destination'
-    ).order_by('-departure_datetime')
-    
+    archive = request.query_params.get('archive', '').lower() in ('1', 'true', 'yes')
+    if archive:
+        trips = trips.filter(
+            Q(status__in=[Trip.STATUS_CANCELLED, Trip.STATUS_COMPLETED]) |
+            Q(status=Trip.STATUS_ACTIVE, departure_datetime__lt=now)
+        )
+        trips = trips.order_by('-departure_datetime')
+    else:
+        trips = trips.filter(status=Trip.STATUS_ACTIVE, departure_datetime__gte=now)
+        trips = trips.order_by('departure_datetime')
     return paginate_queryset(request, trips, TripListSerializer)

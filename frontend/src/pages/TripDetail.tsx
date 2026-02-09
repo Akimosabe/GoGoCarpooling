@@ -150,7 +150,7 @@ export function TripDetail() {
     setError('')
     try {
       await cancelTrip(trip.id)
-      navigate('/profile')
+      navigate('/profile/trips')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка')
     } finally {
