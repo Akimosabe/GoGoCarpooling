@@ -97,6 +97,18 @@ def trip_list(request):
             trips = trips.filter(price__lte=float(max_price))
         except ValueError:
             pass
+
+    # Фильтры по опциям поездки (1/true = только поездки с этой опцией)
+    for param, field in [
+        ('smoking_allowed', 'smoking_allowed'),
+        ('pets_allowed', 'pets_allowed'),
+        ('child_seat_available', 'child_seat_available'),
+        ('two_rear_seats', 'two_rear_seats'),
+        ('parcel_allowed', 'parcel_allowed'),
+    ]:
+        val = request.query_params.get(param, '').lower()
+        if val in ('1', 'true', 'yes'):
+            trips = trips.filter(**{field: True})
     
     # Сортировка
     trips = trips.order_by('departure_datetime')
@@ -180,26 +192,33 @@ def cancel_trip(request, trip_id):
     if trip.status == Trip.STATUS_CANCELLED:
         return Response({"message": "Поездка уже отменена"}, status=status.HTTP_400_BAD_REQUEST)
     
+    from carpooling.models import Booking
+
     with transaction.atomic():
         trip.status = Trip.STATUS_CANCELLED
         trip.save()
-        
-        # Уведомляем всех пассажиров об отмене
-        from carpooling.models import Booking
-        bookings = trip.bookings.filter(status=Booking.STATUS_CONFIRMED)
+        # Отменяем все активные бронирования (и ожидающие, и подтверждённые)
+        bookings = trip.bookings.filter(
+            status__in=[Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED]
+        )
+        to_notify = []
         for booking in bookings:
             booking.status = Booking.STATUS_CANCELLED
             booking.save()
-            
+            to_notify.append(booking)
+    # Уведомления отправляем после коммита, чтобы сбой Celery/Redis не откатывал отмену
+    for booking in to_notify:
+        try:
             create_notification(
                 user=booking.passenger,
                 notification_type=Notification.TYPE_TRIP_CANCELLED,
                 title="Поездка отменена",
                 message=f"Поездка {trip.origin.name} → {trip.destination.name} была отменена водителем",
                 trip=trip,
-                booking=booking
+                booking=booking,
             )
-    
+        except Exception:
+            pass  # не ломаем ответ пользователю при ошибке очереди уведомлений
     return Response({"message": "Поездка успешно отменена"}, status=status.HTTP_200_OK)
 
 

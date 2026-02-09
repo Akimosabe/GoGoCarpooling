@@ -26,9 +26,9 @@ export function Home() {
     (o: string, d: string, dt: string, oId: number | null, dId: number | null) => {
       const params = new URLSearchParams()
       if (oId != null && oId !== 0) params.set('origin_id', String(oId))
-      else if (o) params.set('origin', o)
+      if (o) params.set('origin', o)
       if (dId != null && dId !== 0) params.set('destination_id', String(dId))
-      else if (d) params.set('destination', d)
+      if (d) params.set('destination', d)
       if (dt) params.set('date', dt)
       navigate(`/search?${params.toString()}`)
     },

@@ -9,6 +9,11 @@ export interface TripListParams {
   date?: string
   min_seats?: number
   max_price?: number
+  smoking_allowed?: boolean
+  pets_allowed?: boolean
+  child_seat_available?: boolean
+  two_rear_seats?: boolean
+  parcel_allowed?: boolean
   page?: number
   page_size?: number
 }
@@ -22,6 +27,11 @@ export async function tripList(params?: TripListParams) {
   if (params?.date) p.date = params.date
   if (params?.min_seats != null) p.min_seats = String(params.min_seats)
   if (params?.max_price != null) p.max_price = String(params.max_price)
+  if (params?.smoking_allowed === true) p.smoking_allowed = '1'
+  if (params?.pets_allowed === true) p.pets_allowed = '1'
+  if (params?.child_seat_available === true) p.child_seat_available = '1'
+  if (params?.two_rear_seats === true) p.two_rear_seats = '1'
+  if (params?.parcel_allowed === true) p.parcel_allowed = '1'
   if (params?.page != null) p.page = String(params.page)
   if (params?.page_size != null) p.page_size = String(params.page_size)
   return get<Paginated<Trip>>('/api/trips/', Object.keys(p).length ? p : undefined)
