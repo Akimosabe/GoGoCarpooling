@@ -6,7 +6,7 @@ from django.urls import reverse
 from django import forms
 from datetime import datetime
 import pytz
-from .models import User, Car, City, Trip, Booking, Rating, Notification, Group
+from .models import User, Car, CarCatalog, City, Trip, Booking, Rating, Notification, Group
 
 
 # Убираем стандартный раздел Group из auth
@@ -23,6 +23,15 @@ class CarAdmin(admin.ModelAdmin):
 
 # Регистрируем для работы autocomplete
 admin.site.register(Car, CarAdmin)
+
+
+@admin.register(CarCatalog)
+class CarCatalogAdmin(admin.ModelAdmin):
+    """Справочник марок/моделей для ручного добавления и автодополнения"""
+    list_display = ['make', 'model']
+    search_fields = ['make', 'model']
+    list_filter = ['make']
+    ordering = ['make', 'model']
 
 
 class CarInline(admin.TabularInline):

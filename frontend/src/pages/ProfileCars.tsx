@@ -5,6 +5,8 @@ import { carList, carCreate, carUpdate, carDelete } from '@/api'
 import type { Car as CarType } from '@/api/types'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { CarCatalogAutocomplete } from '@/components/CarCatalogAutocomplete'
+import { ColorSelect } from '@/components/ColorSelect'
 import { Input } from '@/components/ui/Input'
 import { Pencil, Trash2 } from 'lucide-react'
 
@@ -52,6 +54,10 @@ export function ProfileCars() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    if (!form.brand?.trim() || !form.model?.trim()) {
+      setError('Выберите марку и модель из списка.')
+      return
+    }
     setSubmitting(true)
     try {
       await carCreate(form)
@@ -68,6 +74,10 @@ export function ProfileCars() {
   const handleEdit = async (e: React.FormEvent, id: number) => {
     e.preventDefault()
     setError('')
+    if (!form.brand?.trim() || !form.model?.trim()) {
+      setError('Выберите марку и модель из списка.')
+      return
+    }
     setSubmitting(true)
     try {
       await carUpdate(id, form)
@@ -157,19 +167,24 @@ export function ProfileCars() {
             }}
             className="grid gap-4 sm:grid-cols-2"
           >
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">Марка</label>
-              <Input
-                value={form.brand}
-                onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-600">Модель</label>
-              <Input
-                value={form.model}
-                onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm text-slate-600">
+                Марка и модель (выберите из списка)
+              </label>
+              <CarCatalogAutocomplete
+                value={
+                  form.brand && form.model
+                    ? { make: form.brand, model: form.model }
+                    : null
+                }
+                onChange={(opt) =>
+                  setForm((f) => ({
+                    ...f,
+                    brand: opt?.make ?? '',
+                    model: opt?.model ?? '',
+                  }))
+                }
+                placeholder="Введите 2+ буквы и выберите из списка"
                 required
               />
             </div>
@@ -190,9 +205,9 @@ export function ProfileCars() {
             </div>
             <div>
               <label className="mb-1 block text-sm text-slate-600">Цвет</label>
-              <Input
+              <ColorSelect
                 value={form.color}
-                onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
+                onChange={(color) => setForm((f) => ({ ...f, color }))}
                 required
               />
             </div>

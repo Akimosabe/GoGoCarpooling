@@ -38,6 +38,7 @@ from carpooling.views import (
     update_profile,
     car_list_create,
     car_detail,
+    car_catalog_autocomplete,
     
     # Города
     city_list,
@@ -90,6 +91,7 @@ urlpatterns = [
     
     # ============ Управление автомобилями ============
     path('api/cars/', car_list_create, name='car-list-create'),
+    path('api/cars/catalog/', car_catalog_autocomplete, name='car-catalog-autocomplete'),
     path('api/cars/<int:car_id>/', car_detail, name='car-detail'),
     
     # ============ Города ============

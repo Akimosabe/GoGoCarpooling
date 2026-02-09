@@ -1,9 +1,11 @@
+from django.db.models import Q
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from carpooling.models import User, Car
+from carpooling.models import User, Car, CarCatalog
 from carpooling.serializers import (
     UserDetailSerializer, UserProfileSerializer, CarSerializer
 )
@@ -79,3 +81,17 @@ def car_detail(request, car_id):
     elif request.method == 'DELETE':
         car.delete()
         return Response({"message": "Автомобиль удален"}, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def car_catalog_autocomplete(request):
+    """Поиск марка+модель по первым буквам. Только из справочника."""
+    q = (request.GET.get('q') or '').strip()
+    if len(q) < 2:
+        return Response({'results': []})
+    qs = CarCatalog.objects.filter(
+        Q(make__icontains=q) | Q(model__icontains=q)
+    ).order_by('make', 'model')[:25]
+    results = [{'make': c.make, 'model': c.model} for c in qs]
+    return Response({'results': results})

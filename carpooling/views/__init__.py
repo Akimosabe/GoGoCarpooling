@@ -5,7 +5,8 @@ from .auth import (
 )
 from .user import (
     user_profile, update_profile,
-    car_list_create, car_detail
+    car_list_create, car_detail,
+    car_catalog_autocomplete
 )
 from .city import city_list, city_autocomplete
 from .trip import (
@@ -33,6 +34,7 @@ __all__ = [
     # User views
     'user_profile', 'update_profile',
     'car_list_create', 'car_detail',
+    'car_catalog_autocomplete',
     # City views
     'city_list', 'city_autocomplete',
     # Trip views

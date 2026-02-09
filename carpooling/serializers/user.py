@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from carpooling.models import User, Car, Booking, Trip
+from carpooling.models import User, Car, CarCatalog, Booking, Trip
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -10,11 +10,28 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CarSerializer(serializers.ModelSerializer):
-    """Сериализатор для автомобиля"""
+    """Сериализатор для автомобиля. Марка и модель — только из справочника CarCatalog."""
     class Meta:
         model = Car
         fields = ['id', 'brand', 'model', 'year', 'color', 'license_plate', 'is_active']
         read_only_fields = ['id']
+
+    def validate(self, attrs):
+        brand = attrs.get('brand') or (self.instance.brand if self.instance else '')
+        model = attrs.get('model') or (self.instance.model if self.instance else '')
+        if brand and model:
+            in_catalog = CarCatalog.objects.filter(make=brand, model=model).exists()
+            # При редактировании разрешаем оставить старые данные, даже если их нет в справочнике
+            unchanged = (
+                self.instance
+                and self.instance.brand == brand
+                and self.instance.model == model
+            )
+            if not in_catalog and not unchanged:
+                raise serializers.ValidationError(
+                    {'brand': 'Выберите марку и модель из списка.'}
+                )
+        return attrs
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

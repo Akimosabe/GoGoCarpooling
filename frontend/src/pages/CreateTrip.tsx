@@ -5,6 +5,7 @@ import { createTrip, carList } from '@/api'
 import type { Car as CarType, Trip } from '@/api/types'
 import { Baby, Cigarette, Dog, Package, Users2 } from 'lucide-react'
 import { CityAutocomplete } from '@/components/CityAutocomplete'
+import { ColorSelect } from '@/components/ColorSelect'
 import { DatePicker } from '@/components/DatePicker'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -303,10 +304,10 @@ export function CreateTrip() {
               </div>
               <div>
                 <label className="mb-1 block text-sm text-slate-600">Цвет</label>
-                <Input
+                <ColorSelect
                   value={newCar.color}
-                  onChange={(e) =>
-                    setNewCar((c) => ({ ...c, color: e.target.value }))
+                  onChange={(color) =>
+                    setNewCar((c) => ({ ...c, color }))
                   }
                   required
                 />

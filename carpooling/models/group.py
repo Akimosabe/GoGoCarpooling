@@ -7,5 +7,5 @@ class Group(BaseGroup):
     class Meta:
         proxy = True
         verbose_name = "Группа"
-        verbose_name_plural = "7. Группы"
+        verbose_name_plural = "8. Группы"
         app_label = 'carpooling'
