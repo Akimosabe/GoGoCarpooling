@@ -77,7 +77,7 @@ export function CityAutocomplete({
       />
       {open && (suggestions.length > 0 || loading) && (
         <ul
-          className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+          className="absolute left-0 z-50 mt-1 max-h-48 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
           role="listbox"
         >
           {loading && (
@@ -89,14 +89,17 @@ export function CityAutocomplete({
                 key={s.data.id}
                 role="option"
                 tabIndex={0}
-                className="cursor-pointer px-4 py-2 text-sm text-slate-800 hover:bg-slate-100"
+                className="cursor-pointer px-4 py-2 text-left leading-tight hover:bg-slate-100"
                 onClick={() => {
                   onChange(s.value)
                   onSelect?.({ id: s.data.id, value: s.value })
                   setOpen(false)
                 }}
               >
-                {s.value}
+                <div className="font-semibold text-slate-900">{s.data.city},</div>
+                {s.data.region && (
+                  <div className="truncate text-xs text-slate-500">{s.data.region}</div>
+                )}
               </li>
             ))}
         </ul>
