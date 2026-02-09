@@ -169,3 +169,67 @@ def password_reset_confirm(request, uidb64, token):
     user.save(update_fields=['password'])
     
     return Response({"message": "Пароль успешно изменен"})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """Смена пароля для авторизованного пользователя"""
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    new_password_confirm = request.data.get('new_password_confirm')
+
+    if not current_password:
+        return Response(
+            {"message": "Введите текущий пароль"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    if not new_password or not new_password_confirm:
+        return Response(
+            {"message": "Заполните оба поля нового пароля"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    if new_password != new_password_confirm:
+        return Response(
+            {"message": "Новые пароли не совпадают"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    if len(new_password) < 8:
+        return Response(
+            {"message": "Пароль должен содержать минимум 8 символов"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = authenticate(request, email=request.user.email, password=current_password)
+    if user is None:
+        return Response(
+            {"message": "Неверный текущий пароль"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user.set_password(new_password)
+    user.save(update_fields=['password'])
+    return Response({"message": "Пароль успешно изменён"})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """Удаление аккаунта (требуется подтверждение паролем)"""
+    password = request.data.get('password')
+    if not password:
+        return Response(
+            {"message": "Введите пароль для подтверждения"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = authenticate(request, email=request.user.email, password=password)
+    if user is None:
+        return Response(
+            {"message": "Неверный пароль"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    auth_logout(request)
+    user.delete()
+    return Response({"message": "Аккаунт удалён"})

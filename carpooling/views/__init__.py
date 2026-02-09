@@ -1,6 +1,7 @@
 from .auth import (
     register, login, logout, current_user,
-    password_reset_request, password_reset_confirm
+    password_reset_request, password_reset_confirm,
+    change_password, delete_account
 )
 from .user import (
     user_profile, update_profile,
@@ -28,6 +29,7 @@ __all__ = [
     # Auth views
     'register', 'login', 'logout', 'current_user',
     'password_reset_request', 'password_reset_confirm',
+    'change_password', 'delete_account',
     # User views
     'user_profile', 'update_profile',
     'car_list_create', 'car_detail',

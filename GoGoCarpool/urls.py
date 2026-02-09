@@ -30,6 +30,8 @@ from carpooling.views import (
     current_user,
     password_reset_request,
     password_reset_confirm,
+    change_password,
+    delete_account,
     
     # Профили
     user_profile,
@@ -79,6 +81,8 @@ urlpatterns = [
     path('api/auth/me/', current_user, name='current-user'),
     path('api/auth/password-reset/', password_reset_request, name='password-reset-request'),
     path('api/auth/password-reset/<str:uidb64>/<str:token>/', password_reset_confirm, name='password-reset-confirm'),
+    path('api/auth/change-password/', change_password, name='change-password'),
+    path('api/auth/delete-account/', delete_account, name='delete-account'),
     
     # ============ Профили пользователей ============
     path('api/users/<int:user_id>/profile/', user_profile, name='user-profile'),

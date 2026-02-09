@@ -52,3 +52,17 @@ export async function passwordResetConfirm(
 ) {
   return post<{ message: string }>(`/api/auth/password-reset/${uidb64}/${token}/`, data)
 }
+
+export interface ChangePasswordPayload {
+  current_password: string
+  new_password: string
+  new_password_confirm: string
+}
+
+export async function changePassword(data: ChangePasswordPayload) {
+  return post<{ message: string }>('/api/auth/change-password/', data)
+}
+
+export async function deleteAccount(password: string) {
+  return post<{ message: string }>('/api/auth/delete-account/', { password })
+}
