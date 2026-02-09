@@ -88,13 +88,31 @@ WSGI_APPLICATION = "GoGoCarpool.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# PostgreSQL: задайте DJANGO_DB_NAME, DJANGO_DB_USER, DJANGO_DB_PASSWORD в hiddensettings.env
+# Если переменные не заданы — используется SQLite (для разработки без установки PostgreSQL).
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+_db_name = os.environ.get("DJANGO_DB_NAME")
+_db_user = os.environ.get("DJANGO_DB_USER")
+_db_password = os.environ.get("DJANGO_DB_PASSWORD", "")
+
+if _db_name and _db_user:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": _db_name,
+            "USER": _db_user,
+            "PASSWORD": _db_password,
+            "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
+            "PORT": os.environ.get("DJANGO_DB_PORT", "5432"),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation

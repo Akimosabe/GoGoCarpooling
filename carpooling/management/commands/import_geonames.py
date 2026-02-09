@@ -130,7 +130,7 @@ class Command(BaseCommand):
         self.stdout.write(f'Скачивание {url}...')
         
         try:
-            with urllib.request.urlopen(url, timeout=60, context=SSL_CONTEXT) as response:
+            with urllib.request.urlopen(url, timeout=300, context=SSL_CONTEXT) as response:
                 zip_data = BytesIO(response.read())
         except Exception as e:
             raise Exception(f'Не удалось скачать файл: {e}')

@@ -232,6 +232,7 @@ class TripAdmin(admin.ModelAdmin):
         'id', 'driver', 'origin', 'destination', 'departure_datetime',
         'price', 'available_seats', 'total_seats', 'status', 'created_at'
     ]
+    list_display_links = ['id']
     list_filter = ['status', 'departure_datetime', 'created_at', 'origin', 'destination']
     search_fields = ['driver__email', 'driver__first_name', 'origin__name', 'destination__name']
     readonly_fields = ['created_at', 'updated_at']
@@ -251,7 +252,11 @@ class TripAdmin(admin.ModelAdmin):
             'fields': ('total_seats', 'available_seats', 'price')
         }),
         ('Дополнительно', {
-            'fields': ('description', 'smoking_allowed', 'pets_allowed', 'luggage_size')
+            'fields': (
+                'description', 'smoking_allowed', 'pets_allowed',
+                'child_seat_available', 'two_rear_seats', 'parcel_allowed',
+                'luggage_size'
+            )
         }),
         ('Даты', {
             'fields': ('created_at', 'updated_at'),
@@ -263,15 +268,23 @@ class TripAdmin(admin.ModelAdmin):
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     list_display = [
-        'id', 'trip', 'passenger', 'seats_count', 'status', 'created_at'
+        'id', 'trip', 'trip_link', 'passenger', 'seats_count', 'status', 'created_at'
     ]
+    list_display_links = ['id']
     list_filter = ['status', 'created_at']
     search_fields = ['passenger__email', 'passenger__first_name', 'trip__origin', 'trip__destination']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'trip_link']
     date_hierarchy = 'created_at'
     autocomplete_fields = ['trip', 'passenger']
     list_per_page = 25
-    
+
+    def trip_link(self, obj):
+        if not obj or not obj.trip_id:
+            return '—'
+        url = reverse('admin:carpooling_trip_change', args=[obj.trip_id])
+        return format_html('<a href="{}">Поездка #{}</a>', url, obj.trip_id)
+    trip_link.short_description = 'Поездка (id)'
+
     fieldsets = (
         ('Информация о бронировании', {
             'fields': ('trip', 'passenger', 'seats_count', 'status')
