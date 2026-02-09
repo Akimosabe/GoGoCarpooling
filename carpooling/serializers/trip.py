@@ -1,9 +1,12 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from datetime import datetime
 import pytz
 from carpooling.models import Trip, City, Booking, Car
 from .user import UserSerializer, UserDetailSerializer, CarSerializer
+
+User = get_user_model()
 
 
 class CitySerializer(serializers.ModelSerializer):
@@ -35,9 +38,10 @@ class TripListSerializer(serializers.ModelSerializer):
     car = CarSerializer(read_only=True)
     origin = CityShortSerializer(read_only=True)
     destination = CityShortSerializer(read_only=True)
+    departure_datetime = serializers.SerializerMethodField()
     effective_status = serializers.CharField(read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
-    
+
     class Meta:
         model = Trip
         fields = [
@@ -47,22 +51,61 @@ class TripListSerializer(serializers.ModelSerializer):
             'smoking_allowed', 'pets_allowed', 'luggage_size',
             'status', 'effective_status', 'is_expired', 'created_at'
         ]
-    
+
+    def get_departure_datetime(self, obj):
+        """ISO 8601 строка для надёжного парсинга на фронте"""
+        dt = getattr(obj, 'departure_datetime', None)
+        return dt.isoformat() if dt else None
+
     def get_driver_rating(self, obj):
         """Получить рейтинг водителя"""
         return obj.driver.average_rating
 
 
+class DriverForTripSerializer(serializers.ModelSerializer):
+    """Водитель в контексте поездки: телефон только для водителя или пассажира с бронированием"""
+    average_rating = serializers.ReadOnlyField()
+    total_ratings_count = serializers.ReadOnlyField()
+    cars = CarSerializer(many=True, read_only=True)
+    phone = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'first_name', 'phone', 'avatar', 'date_of_birth',
+            'trips_as_driver', 'trips_as_passenger',
+            'average_rating', 'total_ratings_count',
+            'cars', 'is_staff', 'is_superuser', 'created_at'
+        ]
+
+    def get_phone(self, obj):
+        request = self.context.get('request')
+        trip = self.context.get('trip')
+        if not request or not request.user.is_authenticated or not trip:
+            return None
+        if trip.driver_id == request.user.id:
+            return obj.phone
+        if trip.bookings.filter(
+            passenger=request.user,
+            status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_PENDING]
+        ).exists():
+            return obj.phone
+        return None
+
+
 class TripDetailSerializer(serializers.ModelSerializer):
     """Детальный сериализатор поездки"""
-    driver = UserDetailSerializer(read_only=True)
+    driver = serializers.SerializerMethodField()
     car = CarSerializer(read_only=True)
     origin = CityShortSerializer(read_only=True)
     destination = CityShortSerializer(read_only=True)
+    departure_datetime = serializers.SerializerMethodField()
+    driver_phone = serializers.SerializerMethodField()
     bookings_count = serializers.SerializerMethodField()
+    seat_passengers = serializers.SerializerMethodField()
     effective_status = serializers.CharField(read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
-    
+
     class Meta:
         model = Trip
         fields = [
@@ -70,12 +113,64 @@ class TripDetailSerializer(serializers.ModelSerializer):
             'origin', 'destination', 'departure_datetime',
             'price', 'total_seats', 'available_seats',
             'description', 'smoking_allowed', 'pets_allowed', 'luggage_size',
-            'bookings_count', 'status', 'effective_status', 'is_expired', 'created_at', 'updated_at'
+            'driver_phone', 'bookings_count', 'seat_passengers',
+            'status', 'effective_status', 'is_expired', 'created_at', 'updated_at'
         ]
-    
+
+    def get_driver(self, obj):
+        context = {**self.context, 'trip': obj}
+        return DriverForTripSerializer(obj.driver, context=context).data
+
+    def get_departure_datetime(self, obj):
+        dt = getattr(obj, 'departure_datetime', None)
+        return dt.isoformat() if dt else None
+
+    def get_driver_phone(self, obj):
+        """Телефон водителя: только для водителя или пассажира с бронированием"""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        if obj.driver_id == request.user.id:
+            return obj.driver.phone
+        if obj.bookings.filter(
+            passenger=request.user,
+            status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_PENDING]
+        ).exists():
+            return obj.driver.phone
+        return None
+
     def get_bookings_count(self, obj):
-        """Количество активных бронирований"""
         return obj.bookings.filter(status=Booking.STATUS_CONFIRMED).count()
+
+    def get_seat_passengers(self, obj):
+        """Список пассажиров (подтверждённые и ожидающие): аватар для всех, телефон только для водителя"""
+        def avatar_name(user):
+            a = getattr(user, 'avatar', None)
+            if not a:
+                return None
+            try:
+                return a.name
+            except (ValueError, AttributeError):
+                return None
+
+        bookings = obj.bookings.filter(
+            status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_PENDING]
+        ).select_related('passenger').order_by('created_at')
+        request = self.context.get('request')
+        is_driver = request and request.user.is_authenticated and request.user.id == obj.driver_id
+        return [
+            {
+                'booking_id': b.id,
+                'passenger': {
+                    'id': b.passenger.id,
+                    'first_name': b.passenger.first_name or '',
+                    'avatar': avatar_name(b.passenger),
+                },
+                'seats_count': b.seats_count,
+                'phone': b.passenger.phone if is_driver else None,
+            }
+            for b in bookings
+        ]
 
 
 class NewCarSerializer(serializers.ModelSerializer):

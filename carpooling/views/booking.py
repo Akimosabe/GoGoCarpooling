@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
+from django.db import IntegrityError
 
 from carpooling.models import Trip, Booking, User, Notification
 from carpooling.serializers import (
@@ -32,30 +33,46 @@ def book_seat(request, trip_id):
             "message": "Эта поездка недоступна для бронирования"
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    # Проверка существующего бронирования
-    existing_booking = Booking.objects.filter(
-        trip=trip, 
-        passenger=request.user,
+    # Ранее отменённое или отклонённое бронирование — повторное бронирование запрещено
+    previous_booking = Booking.objects.filter(
+        trip=trip, passenger=request.user
+    ).exclude(
         status__in=[Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED]
     ).first()
-    
-    if existing_booking:
-        return Response({
-            "message": "У вас уже есть активное бронирование для этой поездки"
-        }, status=status.HTTP_400_BAD_REQUEST)
+    if previous_booking:
+        if previous_booking.status == Booking.STATUS_CANCELLED:
+            return Response({
+                "message": "Вы уже бронировались в эту поездку. Ваше бронирование было отменено.",
+                "code": "previous_booking_cancelled",
+            }, status=status.HTTP_400_BAD_REQUEST)
+        if previous_booking.status == Booking.STATUS_REJECTED:
+            return Response({
+                "message": "Вы уже бронировались в эту поездку. Ваше бронирование было отклонено водителем.",
+                "code": "previous_booking_rejected",
+            }, status=status.HTTP_400_BAD_REQUEST)
     
     serializer = BookingCreateSerializer(data=request.data)
-    if serializer.is_valid():
-        seats_count = serializer.validated_data['seats_count']
-        
-        # Создание бронирования с блокировкой для избежания race condition
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    seats_count = serializer.validated_data['seats_count']
+    
+    # Создание бронирования с блокировкой: проверка дубликата и мест внутри транзакции
+    try:
         with transaction.atomic():
-            # Перечитываем trip с блокировкой строки в БД
             trip = Trip.objects.select_for_update().select_related(
                 'origin', 'destination'
             ).get(id=trip_id)
             
-            # Проверка доступности мест (теперь внутри блокировки)
+            if Booking.objects.filter(
+                trip=trip,
+                passenger=request.user,
+                status__in=[Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED]
+            ).exists():
+                return Response({
+                    "message": "У вас уже есть бронирование на эту поездку"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             if trip.available_seats < seats_count:
                 return Response({
                     "message": f"Недостаточно свободных мест. Доступно: {trip.available_seats}"
@@ -82,8 +99,19 @@ def book_seat(request, trip_id):
             )
         
         return Response(BookingDetailSerializer(booking).data, status=status.HTTP_201_CREATED)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except IntegrityError:
+        previous_booking = Booking.objects.filter(
+            trip_id=trip_id, passenger=request.user
+        ).first()
+        if previous_booking and previous_booking.status == Booking.STATUS_REJECTED:
+            return Response({
+                "message": "Вы уже бронировались в эту поездку. Ваше бронирование было отклонено водителем.",
+                "code": "previous_booking_rejected",
+            }, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            "message": "Вы уже бронировались в эту поездку. Ваше бронирование было отменено.",
+            "code": "previous_booking_cancelled",
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])

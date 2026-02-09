@@ -88,7 +88,7 @@ def trip_detail(request, trip_id):
     """Получение детальной информации о поездке"""
     try:
         trip = Trip.objects.select_related('driver', 'car', 'origin', 'destination').get(id=trip_id)
-        serializer = TripDetailSerializer(trip)
+        serializer = TripDetailSerializer(trip, context={'request': request})
         return Response(serializer.data)
     except Trip.DoesNotExist:
         return Response({"message": "Поездка не найдена"}, status=status.HTTP_404_NOT_FOUND)
@@ -101,7 +101,7 @@ def create_trip(request):
     serializer = TripCreateUpdateSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         trip = serializer.save()
-        return Response(TripDetailSerializer(trip).data, status=status.HTTP_201_CREATED)
+        return Response(TripDetailSerializer(trip, context={'request': request}).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -138,7 +138,7 @@ def edit_trip(request, trip_id):
                 trip=trip
             )
         
-        return Response(TripDetailSerializer(trip).data)
+        return Response(TripDetailSerializer(trip, context={'request': request}).data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

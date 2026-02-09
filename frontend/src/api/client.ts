@@ -34,8 +34,11 @@ export async function api<T>(
     throw new Error(res.ok ? 'Invalid JSON' : text || res.statusText)
   }
   if (!res.ok) {
-    const err = data as { message?: string; [k: string]: unknown }
-    throw new Error(err?.message || (typeof err === 'string' ? err : res.statusText))
+    const err = data as { message?: string; code?: string; [k: string]: unknown }
+    const msg = err?.message || (typeof err === 'string' ? err : res.statusText)
+    const e = new Error(msg) as Error & { code?: string }
+    e.code = err?.code
+    throw e
   }
   return data as T
 }

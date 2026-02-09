@@ -74,9 +74,18 @@ export interface Trip {
   status: string
   effective_status: string
   is_expired: boolean
+  driver_phone?: string | null
   bookings_count?: number
+  seat_passengers?: SeatPassenger[]
   created_at?: string
   updated_at?: string
+}
+
+export interface SeatPassenger {
+  booking_id: number
+  passenger: { id: number; first_name: string; avatar?: string | null }
+  seats_count: number
+  phone?: string | null
 }
 
 export interface Booking {

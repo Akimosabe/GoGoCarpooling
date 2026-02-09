@@ -15,10 +15,19 @@ export async function rejectBooking(bookingId: number, rejection_reason?: string
   })
 }
 
+/** Backend returns paginated { results: Booking[] }; normalize to array */
+function unwrapPaginatedBookings(data: unknown): Booking[] {
+  if (Array.isArray(data)) return data
+  const obj = data as { results?: Booking[] }
+  return Array.isArray(obj?.results) ? obj.results : []
+}
+
 export async function userBookings() {
-  return get<Booking[]>('/api/my-bookings/')
+  const data = await get<unknown>('/api/my-bookings/')
+  return unwrapPaginatedBookings(data)
 }
 
 export async function tripBookings(tripId: number) {
-  return get<Booking[]>(`/api/trips/${tripId}/bookings/`)
+  const data = await get<unknown>(`/api/trips/${tripId}/bookings/`)
+  return unwrapPaginatedBookings(data)
 }
