@@ -4,7 +4,7 @@ from .auth import (
     change_password, delete_account
 )
 from .user import (
-    user_profile, update_profile,
+    user_profile, update_profile, report_user,
     car_list_create, car_detail,
     car_catalog_autocomplete
 )
@@ -32,7 +32,7 @@ __all__ = [
     'password_reset_request', 'password_reset_confirm',
     'change_password', 'delete_account',
     # User views
-    'user_profile', 'update_profile',
+    'user_profile', 'update_profile', 'report_user',
     'car_list_create', 'car_detail',
     'car_catalog_autocomplete',
     # City views

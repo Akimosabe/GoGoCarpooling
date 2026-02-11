@@ -1,6 +1,8 @@
 import re
 
 from django.db.models import Q
+from django.conf import settings
+from django.core.mail import send_mail
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -147,3 +149,42 @@ def car_catalog_autocomplete(request):
     ).order_by('make', 'model')[:25]
     results = [{'make': c.make, 'model': c.model} for c in qs]
     return Response({'results': results})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def report_user(request, user_id):
+    """Отправка жалобы на пользователя. Письмо уходит на REPORT_EMAIL."""
+    text = (request.data.get('text') or '').strip()
+    if not text:
+        return Response(
+            {"message": "Опишите причину жалобы"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    if request.user.id == user_id:
+        return Response(
+            {"message": "Нельзя пожаловаться на себя"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    try:
+        reported = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response(
+            {"message": "Пользователь не найден"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    reporter_name = request.user.first_name or request.user.email or str(request.user.id)
+    reported_name = reported.first_name or reported.email or str(reported.id)
+    body = (
+        f"Кто пожаловался: {reporter_name} ({request.user.id})\n"
+        f"На кого: {reported_name} ({reported.id})\n\n"
+        f"{text}"
+    )
+    send_mail(
+        subject="Жалоба на пользователя GoGoCarpool",
+        message=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[getattr(settings, 'REPORT_EMAIL', 'akimo7abe@gmail.com')],
+        fail_silently=False,
+    )
+    return Response({"message": "Жалоба отправлена"})

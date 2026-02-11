@@ -180,6 +180,8 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'sabenoreplay@yandex.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', 'sabenoreplay@yandex.com')
 SERVER_EMAIL = os.environ.get('EMAIL_HOST_USER', 'sabenoreplay@yandex.com')
+# Адрес для приёма жалоб на пользователей (нигде не показывается в UI)
+REPORT_EMAIL = os.environ.get('REPORT_EMAIL', 'akimo7abe@gmail.com')
 
 
 # GeoNames - бесплатная база городов

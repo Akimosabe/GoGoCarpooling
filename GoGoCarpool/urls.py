@@ -36,6 +36,7 @@ from carpooling.views import (
     # Профили
     user_profile,
     update_profile,
+    report_user,
     car_list_create,
     car_detail,
     car_catalog_autocomplete,
@@ -88,6 +89,7 @@ urlpatterns = [
     # ============ Профили пользователей ============
     path('api/users/<int:user_id>/profile/', user_profile, name='user-profile'),
     path('api/profile/update/', update_profile, name='update-profile'),
+    path('api/users/<int:user_id>/report/', report_user, name='report-user'),
     
     # ============ Управление автомобилями ============
     path('api/cars/', car_list_create, name='car-list-create'),

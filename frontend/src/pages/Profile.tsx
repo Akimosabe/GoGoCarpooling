@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Archive, Car, LogOut, Pencil, Settings, Star, User } from 'lucide-react'
+import { Archive, Car, LogOut, Pencil, Settings, Star, User, Flag } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   userProfile,
   updateProfile,
+  reportUser,
   myTrips,
   userBookings,
 } from '@/api'
@@ -37,6 +38,10 @@ export function Profile() {
   })
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportText, setReportText] = useState('')
+  const [reportSending, setReportSending] = useState(false)
+  const [reportError, setReportError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const profileId = id ? parseInt(id, 10) : currentUser?.id
@@ -302,14 +307,32 @@ export function Profile() {
                     )}
                   </p>
                 )}
-                <div className="mt-2 flex items-center gap-1 text-amber-500">
-                  <Star className="h-5 w-5 fill-current" />
-                  <span className="font-medium">
-                    {profile.average_rating ?? 0}
-                  </span>
-                  <span className="text-sm text-slate-500">
-                    ({profile.total_ratings_count ?? 0} оценок)
-                  </span>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <Star className="h-5 w-5 fill-current" />
+                    <span className="font-medium">
+                      {profile.average_rating ?? 0}
+                    </span>
+                    <span className="text-sm text-slate-500">
+                      ({profile.total_ratings_count ?? 0} оценок)
+                    </span>
+                  </div>
+                  {!isOwner && currentUser && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto gap-1.5 text-red-300 hover:bg-red-50/50 hover:text-red-400"
+                      onClick={() => {
+                        setReportOpen(true)
+                        setReportText('')
+                        setReportError('')
+                      }}
+                    >
+                      <Flag className="h-4 w-4" />
+                      Пожаловаться
+                    </Button>
+                  )}
                 </div>
               </>
             )}
@@ -441,6 +464,70 @@ export function Profile() {
             <span className="font-medium text-slate-700">Архив поездок</span>
             <span className="ml-auto text-sm text-slate-500">Открыть →</span>
           </Link>
+        </div>
+      )}
+
+      {reportOpen && profileId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !reportSending && setReportOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-title"
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="report-title" className="text-lg font-semibold text-slate-900">
+              Пожаловаться на пользователя
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Опишите причину жалобы. Сообщение будет отправлено модератору.
+            </p>
+            {reportError && (
+              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {reportError}
+              </div>
+            )}
+            <textarea
+              className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+              rows={4}
+              placeholder="Текст жалобы..."
+              value={reportText}
+              onChange={(e) => setReportText(e.target.value)}
+              disabled={reportSending}
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => !reportSending && setReportOpen(false)}
+                disabled={reportSending}
+              >
+                Отмена
+              </Button>
+              <Button
+                variant="primary"
+                disabled={reportSending || !reportText.trim()}
+                onClick={async () => {
+                  if (!reportText.trim() || reportSending || !profileId) return
+                  setReportSending(true)
+                  setReportError('')
+                  try {
+                    await reportUser(profileId, reportText.trim())
+                    setReportOpen(false)
+                    setReportText('')
+                  } catch (err) {
+                    setReportError(err instanceof Error ? err.message : 'Не удалось отправить жалобу')
+                  } finally {
+                    setReportSending(false)
+                  }
+                }}
+              >
+                {reportSending ? 'Отправка…' : 'Отправить'}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

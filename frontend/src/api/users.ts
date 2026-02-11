@@ -1,8 +1,12 @@
-import { get } from './client'
+import { get, post } from './client'
 import type { User } from './types'
 
 export async function userProfile(userId: number) {
   return get<User>(`/api/users/${userId}/profile/`)
+}
+
+export async function reportUser(userId: number, text: string) {
+  return post<{ message: string }>(`/api/users/${userId}/report/`, { text })
 }
 
 export interface UpdateProfilePayload {
