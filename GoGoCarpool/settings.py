@@ -260,3 +260,10 @@ CORS_ALLOWED_ORIGINS = _cors_origins
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [o.replace('http://', 'https://') for o in _cors_origins]
+
+# Куки сессии и CSRF по HTTPS (Render): без Secure браузер не отправляет куки
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME') or not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'

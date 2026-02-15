@@ -50,13 +50,18 @@ def user_profile(request, user_id):
         user = User.objects.get(id=user_id)
         serializer = UserDetailSerializer(user, context={'request': request})
         data = serializer.data
-        # Номер виден: владельцу профиля или тому, кто забронирован в поездку этого пользователя (как водителя)
+        # Номер и почта видны: владельцу профиля или тому, кто забронирован в поездку этого пользователя (как водителя)
+        try:
+            viewer_id = request.user.id if request.user.is_authenticated else None
+        except Exception:
+            viewer_id = None
+        is_owner = viewer_id is not None and viewer_id == user.id
         can_see_phone = (
             request.user.is_authenticated
             and (
-                request.user.id == user_id
+                is_owner
                 or Booking.objects.filter(
-                    trip__driver_id=user_id,
+                    trip__driver_id=user.id,
                     passenger=request.user,
                     status__in=[Booking.STATUS_CONFIRMED, Booking.STATUS_PENDING],
                 ).exists()
