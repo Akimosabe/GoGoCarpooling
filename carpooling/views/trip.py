@@ -13,7 +13,7 @@ from carpooling.serializers import (
     TripListSerializer, TripDetailSerializer, TripCreateUpdateSerializer
 )
 from carpooling.pagination import paginate_queryset
-from .utils import create_notification, _trip_datetime_for_message
+from .utils import create_notification, create_leave_rating_notifications_for_trip, _trip_datetime_for_message
 
 
 @api_view(['GET'])
@@ -231,6 +231,10 @@ def cancel_trip(request, trip_id):
             )
         except Exception:
             pass  # не ломаем ответ пользователю при ошибке очереди уведомлений
+    try:
+        create_leave_rating_notifications_for_trip(trip, is_cancelled=True)
+    except Exception:
+        pass
     return Response({"message": "Поездка успешно отменена"}, status=status.HTTP_200_OK)
 
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Archive, Car, LogOut, Pencil, Settings, Star, User, Flag } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -8,6 +8,7 @@ import {
   reportUser,
   myTrips,
   userBookings,
+  createRating,
 } from '@/api'
 import type { User as UserType, Trip, Booking } from '@/api/types'
 import { TripOptionIcons } from '@/components/TripOptionIcons'
@@ -43,9 +44,18 @@ export function Profile() {
   const [reportSending, setReportSending] = useState(false)
   const [reportError, setReportError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [ratingModalOpen, setRatingModalOpen] = useState(false)
+  const [ratingStars, setRatingStars] = useState(0)
+  const [ratingComment, setRatingComment] = useState('')
+  const [ratingSending, setRatingSending] = useState(false)
+  const [ratingError, setRatingError] = useState('')
 
   const profileId = id ? parseInt(id, 10) : currentUser?.id
   const isOwner = !!currentUser && profileId === currentUser.id
+  const rateParam = searchParams.get('rate')
+  const tripIdParam = searchParams.get('trip_id')
+  const tripIdForRating = tripIdParam ? parseInt(tripIdParam, 10) : null
 
   useEffect(() => {
     if (authLoading) return
@@ -85,6 +95,17 @@ export function Profile() {
     if (authLoading) return
     if (!currentUser && !id) navigate('/auth')
   }, [currentUser, id, authLoading, navigate])
+
+  // Открыть модалку оценки по переходу из уведомления «оставить отзыв»
+  useEffect(() => {
+    if (!profile || !profileId || isOwner || !currentUser) return
+    if (rateParam === '1' && tripIdForRating != null && !Number.isNaN(tripIdForRating)) {
+      setRatingModalOpen(true)
+      setRatingStars(0)
+      setRatingComment('')
+      setRatingError('')
+    }
+  }, [profile, profileId, isOwner, currentUser, rateParam, tripIdForRating])
 
   const handleSaveProfile = async () => {
     if (!currentUser || !isOwner || submitting) return
@@ -525,6 +546,98 @@ export function Profile() {
                 }}
               >
                 {reportSending ? 'Отправка…' : 'Отправить'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {ratingModalOpen && profileId && tripIdForRating != null && !Number.isNaN(tripIdForRating) && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !ratingSending && (setRatingModalOpen(false), setSearchParams((p) => { const next = new URLSearchParams(p); next.delete('rate'); next.delete('trip_id'); return next }))}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="rating-title"
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="rating-title" className="text-lg font-semibold text-slate-900">
+              Оставить отзыв
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Оцените поездку с {profile?.first_name || profile?.email || 'участником'} (1–5 звёзд). Отзыв можно оставить один раз в день.
+            </p>
+            {ratingError && (
+              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {ratingError}
+              </div>
+            )}
+            <div className="mt-4 flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setRatingStars(s)}
+                  className={cn(
+                    'rounded p-1 transition',
+                    ratingStars >= s ? 'text-amber-500' : 'text-slate-300 hover:text-amber-400'
+                  )}
+                  aria-label={`${s} звезд`}
+                >
+                  <Star className={cn('h-8 w-8', ratingStars >= s && 'fill-current')} />
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="mt-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+              rows={3}
+              placeholder="Комментарий (необязательно)"
+              value={ratingComment}
+              onChange={(e) => setRatingComment(e.target.value)}
+              disabled={ratingSending}
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (!ratingSending) {
+                    setRatingModalOpen(false)
+                    setSearchParams((p) => { const next = new URLSearchParams(p); next.delete('rate'); next.delete('trip_id'); return next })
+                  }
+                }}
+                disabled={ratingSending}
+              >
+                Отмена
+              </Button>
+              <Button
+                variant="primary"
+                disabled={ratingSending || ratingStars < 1}
+                onClick={async () => {
+                  if (ratingStars < 1 || ratingSending || !profileId) return
+                  setRatingSending(true)
+                  setRatingError('')
+                  try {
+                    await createRating({
+                      trip: tripIdForRating,
+                      to_user: profileId,
+                      rating: ratingStars,
+                      comment: ratingComment.trim() || undefined,
+                    })
+                    setRatingModalOpen(false)
+                    setSearchParams((p) => { const next = new URLSearchParams(p); next.delete('rate'); next.delete('trip_id'); return next })
+                    const updated = await userProfile(profileId)
+                    setProfile(updated)
+                  } catch (err) {
+                    setRatingError(err instanceof Error ? err.message : 'Не удалось отправить отзыв')
+                  } finally {
+                    setRatingSending(false)
+                  }
+                }}
+              >
+                {ratingSending ? 'Отправка…' : 'Отправить'}
               </Button>
             </div>
           </div>

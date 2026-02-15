@@ -36,6 +36,7 @@ class CarpoolingConfig(AppConfig):
             while True:
                 try:
                     from carpooling.models import Trip
+                    from carpooling.views.utils import create_leave_rating_notifications_for_trip
 
                     # Просрочка по времени города ОТКУДА (origin)
                     active_trips = Trip.objects.filter(
@@ -52,6 +53,17 @@ class CarpoolingConfig(AppConfig):
                     )
 
                     if updated > 0:
+                        for trip in Trip.objects.filter(pk__in=expired_ids).select_related(
+                            "origin", "destination", "driver"
+                        ).prefetch_related("bookings__passenger"):
+                            try:
+                                create_leave_rating_notifications_for_trip(trip, is_cancelled=False)
+                            except Exception as e:
+                                logger.warning(
+                                    "Ошибка создания уведомлений об отзыве для поездки %s: %s",
+                                    trip.id,
+                                    e,
+                                )
                         print(
                             f"[Scheduler] Auto-completed {updated} expired trips",
                             flush=True,

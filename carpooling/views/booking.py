@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Q, F
 from django.utils import timezone
 
 from carpooling.models import Trip, Booking, User, Notification
@@ -12,7 +12,13 @@ from carpooling.serializers import (
     BookingListSerializer, BookingDetailSerializer, BookingCreateSerializer
 )
 from carpooling.pagination import paginate_queryset
-from .utils import create_notification, _trip_datetime_for_message
+from carpooling.tasks import send_booking_notifications_task
+from .utils import _trip_datetime_for_message
+
+
+class NotEnoughSeatsError(Exception):
+    """Места закончились при атомарном обновлении (кто-то забронировал параллельно)."""
+    pass
 
 
 @api_view(['POST'])
@@ -59,54 +65,46 @@ def book_seat(request, trip_id):
     
     seats_count = serializer.validated_data['seats_count']
     
-    # Создание бронирования с блокировкой: проверка дубликата и мест внутри транзакции
+    # Атомарно: вставка бронирования + уменьшение мест одним UPDATE (без длинной блокировки строки).
+    # Несколько запросов могут выполняться параллельно; блокировка только на время одного UPDATE.
     try:
         with transaction.atomic():
-            trip = Trip.objects.select_for_update().select_related(
-                'origin', 'destination'
-            ).get(id=trip_id)
-            
             if Booking.objects.filter(
-                trip=trip,
+                trip_id=trip_id,
                 passenger=request.user,
                 status__in=[Booking.STATUS_PENDING, Booking.STATUS_CONFIRMED]
             ).exists():
                 return Response({
                     "message": "У вас уже есть бронирование на эту поездку"
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
-            if trip.available_seats < seats_count:
-                return Response({
-                    "message": f"Недостаточно свободных мест. Доступно: {trip.available_seats}"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
+
             booking = serializer.save(
-                trip=trip,
+                trip_id=trip_id,
                 passenger=request.user,
                 status=Booking.STATUS_CONFIRMED
             )
-            
-            # Уменьшаем доступные места
-            trip.available_seats -= seats_count
-            trip.save()
-            
-            # Уведомляем водителя о новом бронировании (1 место, 2-4 места, 5-9 мест)
-            route = f"{trip.origin.name} → {trip.destination.name}"
-            dt_str = _trip_datetime_for_message(trip)
-            seats_word = "место" if seats_count == 1 else "места" if 2 <= seats_count <= 4 else "мест"
-            msg = f"{request.user.first_name or request.user.email} забронировал {seats_count} {seats_word} в поездке {route}"
-            if dt_str:
-                msg += f" ({dt_str})"
-            create_notification(
-                user=trip.driver,
-                notification_type=Notification.TYPE_BOOKING_NEW,
-                title="Новое бронирование",
-                message=msg,
-                trip=trip,
-                booking=booking
-            )
-        
-        return Response(BookingDetailSerializer(booking).data, status=status.HTTP_201_CREATED)
+            # Уменьшаем места только если их ещё достаточно (защита от перепродажи при конкурентных запросах)
+            updated = Trip.objects.filter(
+                id=trip_id,
+                available_seats__gte=seats_count
+            ).update(available_seats=F("available_seats") - seats_count)
+            if updated == 0:
+                raise NotEnoughSeatsError()
+
+        trip = Trip.objects.select_related("origin", "destination", "driver").get(id=trip_id)
+        send_booking_notifications_task.delay(booking.id)
+        return Response({
+            "id": booking.id,
+            "trip_id": trip_id,
+            "seats_count": seats_count,
+            "status": booking.status,
+            "created_at": booking.created_at.isoformat(),
+            "available_seats": trip.available_seats,
+        }, status=status.HTTP_201_CREATED)
+    except NotEnoughSeatsError:
+        return Response({
+            "message": "Недостаточно свободных мест. Кто-то только что забронировал."
+        }, status=status.HTTP_400_BAD_REQUEST)
     except IntegrityError:
         previous_booking = Booking.objects.filter(
             trip_id=trip_id, passenger=request.user
@@ -142,30 +140,25 @@ def cancel_booking(request, booking_id):
         }, status=status.HTTP_400_BAD_REQUEST)
     
     with transaction.atomic():
-        # Возвращаем места в поездку
         if booking.status == Booking.STATUS_CONFIRMED:
             booking.trip.available_seats += booking.seats_count
             booking.trip.save()
-        
         booking.status = Booking.STATUS_CANCELLED
         booking.save()
-        
-        # Уведомляем водителя об отмене
-        t = booking.trip
-        route = f"{t.origin.name} → {t.destination.name}"
-        dt_str = _trip_datetime_for_message(t)
-        msg = f"{request.user.first_name or request.user.email} отменил бронирование в поездке {route}"
-        if dt_str:
-            msg += f" ({dt_str})"
-        create_notification(
-            user=t.driver,
-            notification_type=Notification.TYPE_BOOKING_CANCELLED,
-            title="Бронирование отменено",
-            message=msg,
-            trip=t,
-            booking=booking
-        )
-    
+    t = booking.trip
+    route = f"{t.origin.name} → {t.destination.name}"
+    dt_str = _trip_datetime_for_message(t)
+    msg = f"{request.user.first_name or request.user.email} отменил бронирование в поездке {route}"
+    if dt_str:
+        msg += f" ({dt_str})"
+    create_notification(
+        user=t.driver,
+        notification_type=Notification.TYPE_BOOKING_CANCELLED,
+        title="Бронирование отменено",
+        message=msg,
+        trip=t,
+        booking=booking
+    )
     return Response({"message": "Бронирование успешно отменено"}, status=status.HTTP_200_OK)
 
 
@@ -194,31 +187,26 @@ def reject_booking(request, booking_id):
     rejection_reason = request.data.get('rejection_reason', '')
     
     with transaction.atomic():
-        # Возвращаем места в поездку
         booking.trip.available_seats += booking.seats_count
         booking.trip.save()
-        
         booking.status = Booking.STATUS_REJECTED
         booking.rejection_reason = rejection_reason
         booking.save()
-        
-        # Уведомляем пассажира об отклонении
-        t = booking.trip
-        route = f"{t.origin.name} → {t.destination.name}"
-        dt_str = _trip_datetime_for_message(t)
-        msg = f"Ваше бронирование в поездке {route}"
-        if dt_str:
-            msg += f" ({dt_str})"
-        msg += " было отклонено водителем"
-        create_notification(
-            user=booking.passenger,
-            notification_type=Notification.TYPE_BOOKING_REJECTED,
-            title="Бронирование отклонено",
-            message=msg,
-            trip=t,
-            booking=booking
-        )
-    
+    t = booking.trip
+    route = f"{t.origin.name} → {t.destination.name}"
+    dt_str = _trip_datetime_for_message(t)
+    msg = f"Ваше бронирование в поездке {route}"
+    if dt_str:
+        msg += f" ({dt_str})"
+    msg += " было отклонено водителем"
+    create_notification(
+        user=booking.passenger,
+        notification_type=Notification.TYPE_BOOKING_REJECTED,
+        title="Бронирование отклонено",
+        message=msg,
+        trip=t,
+        booking=booking
+    )
     return Response({"message": "Бронирование отклонено"}, status=status.HTTP_200_OK)
 
 

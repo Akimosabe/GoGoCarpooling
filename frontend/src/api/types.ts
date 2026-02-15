@@ -100,13 +100,19 @@ export interface SeatPassenger {
 export interface Booking {
   id: number
   trip: Trip
-  passenger: User
+  passenger?: User
   seats_count: number
   status: string
   comment?: string | null
   rejection_reason?: string | null
   created_at: string
   updated_at?: string
+}
+
+/** Ответ POST /book/ при успехе (минимальный набор для быстрого ответа) */
+export interface BookingCreateResponse extends Pick<Booking, 'id' | 'seats_count' | 'status' | 'created_at'> {
+  trip_id: number
+  available_seats: number
 }
 
 export interface Notification {
@@ -116,6 +122,7 @@ export interface Notification {
   message: string
   trip?: number | null
   booking?: number | null
+  target_user?: number | null
   is_read: boolean
   created_at: string
 }

@@ -7,19 +7,23 @@ from .booking import Booking
 class Notification(models.Model):
     """Уведомления пользователей"""
     TYPE_BOOKING_NEW = "booking_new"
+    TYPE_BOOKING_CREATED = "booking_created"  # пассажиру: «вы забронировали поездку»
     TYPE_BOOKING_CONFIRMED = "booking_confirmed"
     TYPE_BOOKING_REJECTED = "booking_rejected"
     TYPE_BOOKING_CANCELLED = "booking_cancelled"
     TYPE_TRIP_CANCELLED = "trip_cancelled"
     TYPE_TRIP_UPDATED = "trip_updated"
-    
+    TYPE_LEAVE_RATING = "leave_rating"
+
     TYPE_CHOICES = [
         (TYPE_BOOKING_NEW, "Новое бронирование"),
+        (TYPE_BOOKING_CREATED, "Бронирование оформлено"),
         (TYPE_BOOKING_CONFIRMED, "Бронирование подтверждено"),
         (TYPE_BOOKING_REJECTED, "Бронирование отклонено"),
         (TYPE_BOOKING_CANCELLED, "Бронирование отменено"),
         (TYPE_TRIP_CANCELLED, "Поездка отменена"),
         (TYPE_TRIP_UPDATED, "Поездка обновлена"),
+        (TYPE_LEAVE_RATING, "Оставить отзыв"),
     ]
     
     user = models.ForeignKey(
@@ -33,6 +37,14 @@ class Notification(models.Model):
     # Связь с сущностями
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, null=True, blank=True)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, null=True, blank=True)
+    # Для уведомления "оставить отзыв" — пользователь, которому нужно поставить оценку
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="rating_invite_notifications",
+    )
     
     is_read = models.BooleanField(default=False)
     

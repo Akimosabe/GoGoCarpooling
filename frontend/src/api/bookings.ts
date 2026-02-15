@@ -1,8 +1,11 @@
 import { get, post } from './client'
-import type { Booking, Paginated } from './types'
+import type { Booking, BookingCreateResponse, Paginated } from './types'
 
 export async function bookSeat(tripId: number, seats_count: number, comment?: string) {
-  return post<Booking>(`/api/trips/${tripId}/book/`, { seats_count, comment: comment || '' })
+  return post<Booking | BookingCreateResponse>(`/api/trips/${tripId}/book/`, {
+    seats_count,
+    comment: comment || '',
+  })
 }
 
 export async function cancelBooking(bookingId: number) {

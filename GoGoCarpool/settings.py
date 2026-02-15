@@ -234,6 +234,9 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 минут максимум на задачу
 
 
+# Ссылка на фронт для писем (ссылки на поездки и т.д.)
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",      # React dev server

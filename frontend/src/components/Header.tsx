@@ -104,7 +104,11 @@ export function Header() {
                             type="button"
                             onClick={() => {
                               markRead(n.id)
-                              if (n.trip) navigate(`/trips/${n.trip}`)
+                              if (n.notification_type === 'leave_rating' && n.target_user != null && n.trip != null) {
+                                navigate(`/profile/${n.target_user}?rate=1&trip_id=${n.trip}`)
+                              } else if (n.trip) {
+                                navigate(`/trips/${n.trip}`)
+                              }
                               setDropdown(false)
                             }}
                             className={cn(

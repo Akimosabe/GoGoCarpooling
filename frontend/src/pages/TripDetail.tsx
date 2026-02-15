@@ -93,9 +93,24 @@ export function TripDetail() {
     setError('')
     try {
       const created = await bookSeat(trip.id, bookingSeats, undefined)
-      setMyBooking(created)
-      const t = await tripDetail(trip.id)
-      setTrip(t)
+      const minimal = 'available_seats' in created && typeof created.available_seats === 'number'
+      if (minimal && 'trip_id' in created) {
+        setMyBooking({
+          id: created.id,
+          trip: { ...trip, id: created.trip_id, available_seats: created.available_seats },
+          passenger: user,
+          seats_count: created.seats_count,
+          status: created.status,
+          created_at: created.created_at,
+        })
+        setTrip((prev) =>
+          prev ? { ...prev, available_seats: created.available_seats } : null
+        )
+      } else {
+        setMyBooking(created as Booking)
+        const t = await tripDetail(trip.id)
+        setTrip(t)
+      }
     } catch (err) {
       const e = err as Error & { code?: string }
       if (e?.code === 'previous_booking_cancelled' || e?.code === 'previous_booking_rejected') {

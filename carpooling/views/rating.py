@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -10,16 +11,27 @@ from carpooling.serializers import RatingSerializer, RatingCreateSerializer
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_rating(request):
-    """Создание рейтинга после поездки"""
+    """Создание рейтинга после поездки или отмены. Одному пользователю можно оставить отзыв не чаще раза в день."""
     serializer = RatingCreateSerializer(data=request.data)
     if serializer.is_valid():
         trip = serializer.validated_data['trip']
         to_user = serializer.validated_data['to_user']
         
-        # Проверка, что поездка завершена
-        if trip.status != Trip.STATUS_COMPLETED:
+        # Оценку можно оставить после завершения или отмены поездки
+        if trip.status not in (Trip.STATUS_COMPLETED, Trip.STATUS_CANCELLED):
             return Response({
-                "message": "Оценку можно оставить только после завершения поездки"
+                "message": "Оценку можно оставить только после завершения или отмены поездки"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Не чаще одного отзыва в день одному пользователю
+        today = timezone.now().date()
+        if Rating.objects.filter(
+            from_user=request.user,
+            to_user=to_user,
+            created_at__date=today
+        ).exists():
+            return Response({
+                "message": "Вы уже оставляли отзыв этому пользователю сегодня. Можно оставить один отзыв в день."
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Проверка, что пользователь участвовал в поездке

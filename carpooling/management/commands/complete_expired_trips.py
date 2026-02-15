@@ -26,6 +26,7 @@ import pytz
 import logging
 
 from carpooling.models import Trip
+from carpooling.views.utils import create_leave_rating_notifications_for_trip
 
 logger = logging.getLogger(__name__)
 
@@ -74,12 +75,19 @@ class Command(BaseCommand):
                 )
         else:
             expired_ids = [t.id for t in expired_trips]
-            updated = Trip.objects.filter(pk__in=expired_ids).update(status=Trip.STATUS_COMPLETED)
-            
-            # Логируем для мониторинга
+            Trip.objects.filter(pk__in=expired_ids).update(status=Trip.STATUS_COMPLETED)
+            updated = len(expired_ids)
+
+            # Уведомления «оставить отзыв» участникам завершённых поездок
+            for trip in Trip.objects.filter(pk__in=expired_ids).select_related('origin', 'destination').prefetch_related('bookings__passenger'):
+                try:
+                    create_leave_rating_notifications_for_trip(trip, is_cancelled=False)
+                except Exception as e:
+                    logger.warning('Ошибка создания уведомлений об отзыве для поездки %s: %s', trip.id, e)
+
             if updated > 0:
                 logger.info(f'Автозавершено {updated} просроченных поездок')
-            
+
             if not quiet:
                 self.stdout.write(
                     self.style.SUCCESS(f'Завершено {updated} просроченных поездок')
