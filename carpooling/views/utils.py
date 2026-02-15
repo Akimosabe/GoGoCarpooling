@@ -49,7 +49,7 @@ def create_leave_rating_notifications_for_trip(trip, is_cancelled=False):
 
 
 def _trip_datetime_for_message(trip):
-    """То же время, что в профиле (departure_datetime_display). При ошибке — пустая строка."""
+    """То же время, что в профиле (departure_datetime_display). При ошибке будет пустая строка."""
     try:
         s = _departure_in_origin_tz(trip)
         return s if s else ''

@@ -8,17 +8,21 @@ __pycache__/
 # Django
 db.sqlite3
 *.log
+staticfiles/
+media/
 
 # VS Code / IDE
 .vscode/
 .idea/
 
+# Frontend
+node_modules/
+
 # OS
 .DS_Store
 Thumbs.db
 
-# Documentation
-docs/
+# Cursor
 .cursor/
 
 # Environment variables (secrets)
