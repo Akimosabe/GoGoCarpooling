@@ -15,7 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.http import HttpResponse
+from django.urls import path, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -130,6 +131,21 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 ]
 
-# Для загрузки медиа файлов в режиме разработки
+
+def serve_spa(request, _path=None):
+    """Отдаёт index.html для SPA (React Router) при деплое на Render и т.п."""
+    index = settings.STATIC_ROOT / "index.html"
+    if index.exists():
+        with open(index, "r", encoding="utf-8") as f:
+            return HttpResponse(f.read(), content_type="text/html; charset=utf-8")
+    return HttpResponse("Frontend not built. Run: cd frontend && npm run build", status=503)
+
+
+# SPA: все пути кроме api, admin, static, media — отдаём index.html (последним)
+urlpatterns += [
+    re_path(r"^(?!api/|admin/|static/|media/).*$", serve_spa),
+]
+
+# Медиа в режиме разработки
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

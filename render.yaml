@@ -1,0 +1,24 @@
+# Render Blueprint: Web Service + PostgreSQL
+# https://docs.render.com/blueprint-spec
+databases:
+  - name: gogocarpool-db
+    databaseName: gogocarpool
+    user: gogocarpool
+
+services:
+  - type: web
+    name: gogocarpool
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gogocarpool-db
+          property: connectionString
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+        # После деплоя в Dashboard указать: твой-сервис.onrender.com

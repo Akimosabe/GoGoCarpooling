@@ -33,7 +33,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-g$cwk9qb1)1l&!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
+_allowed = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
+_render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if _render_host:
+    _allowed = [*_allowed, _render_host, '.onrender.com']
+ALLOWED_HOSTS = [h.strip() for h in _allowed if h.strip()]
 
 
 # Application definition
@@ -57,6 +61,7 @@ AUTH_USER_MODEL = 'carpooling.User'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -87,32 +92,34 @@ WSGI_APPLICATION = "GoGoCarpool.wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# PostgreSQL: переменные DJANGO_DB_NAME, DJANGO_DB_USER, DJANGO_DB_PASSWORD из hiddensettings.env.
-# Если не заданы — используется SQLite.
+# DATABASE_URL — на Render подставляется автоматически при подключении PostgreSQL.
+# Иначе DJANGO_DB_* из hiddensettings.env или SQLite.
 
-_db_name = os.environ.get("DJANGO_DB_NAME")
-_db_user = os.environ.get("DJANGO_DB_USER")
-_db_password = os.environ.get("DJANGO_DB_PASSWORD", "")
-
-if _db_name and _db_user:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": _db_name,
-            "USER": _db_user,
-            "PASSWORD": _db_password,
-            "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
-            "PORT": os.environ.get("DJANGO_DB_PORT", "5432"),
-        }
-    }
+if _database_url := os.environ.get("DATABASE_URL"):
+    import dj_database_url
+    DATABASES = {"default": dj_database_url.config(default=_database_url, conn_max_age=600)}
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+    _db_name = os.environ.get("DJANGO_DB_NAME")
+    _db_user = os.environ.get("DJANGO_DB_USER")
+    _db_password = os.environ.get("DJANGO_DB_PASSWORD", "")
+    if _db_name and _db_user:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": _db_name,
+                "USER": _db_user,
+                "PASSWORD": _db_password,
+                "HOST": os.environ.get("DJANGO_DB_HOST", "127.0.0.1"),
+                "PORT": os.environ.get("DJANGO_DB_PORT", "5432"),
+            }
         }
-    }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
+        }
 
 
 # Password validation
@@ -194,6 +201,8 @@ REPORT_EMAIL = os.environ.get('REPORT_EMAIL', 'akimo7abe@gmail.com')
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "frontend" / "dist"] if (BASE_DIR / "frontend" / "dist").exists() else []
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Media files (User uploads)
 MEDIA_URL = "/media/"
@@ -235,21 +244,19 @@ CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 минут максимум на зада
 
 
 # Ссылка на фронт для писем (ссылки на поездки и т.д.)
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+_render = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+FRONTEND_URL = (f"https://{_render}" if _render else os.environ.get('FRONTEND_URL', 'http://localhost:5173')).rstrip('/')
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",      # React dev server
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",      # Vite dev server
-    "http://127.0.0.1:5173",
-]
-CORS_ALLOW_CREDENTIALS = True  # Для передачи cookies (сессии)
-
-# CSRF: доверенные источники для запросов с фронта (Django 4+)
-CSRF_TRUSTED_ORIGINS = [
+_cors_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+if _render_host := os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+    _cors_origins.append(f"https://{_render_host}")
+CORS_ALLOWED_ORIGINS = _cors_origins
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [o.replace('http://', 'https://') for o in _cors_origins]

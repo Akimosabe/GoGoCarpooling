@@ -118,11 +118,20 @@ EMAIL_HOST_PASSWORD=пароль
 
 REDIS_URL=redis://localhost:6379/0
 ```
-5. **Запуск локально:** В корне проекта лежит скрипт **`start-all.ps1`**. Он по очереди открывает четыре окна PowerShell и запускает в них Redis, Django, Frontend и Celery. Запускать из корня проекта:
+5. **Запуск локально:** скрипт `start-all.ps1` в корне (Redis, Django, Frontend, Celery).
 
 ```powershell
 cd C:\Projects\GoGoCarpooling
 .\start-all.ps1
 ```
+
+---
+
+## Деплой на Render
+
+- Подключи репозиторий к [Render](https://render.com). В корне есть **`render.yaml`** (Blueprint): один Web Service (Docker) + PostgreSQL.
+- Render соберёт образ по **`Dockerfile`**, подставит **DATABASE_URL** и **RENDER_EXTERNAL_HOSTNAME**.
+- В Dashboard у Web Service в **Environment** задай **DJANGO_ALLOWED_HOSTS** = `твой-сервис.onrender.com` (без `https://`).
+- По желанию: **EMAIL_*** для писем (иначе восстановление пароля не будет отправлять письма). Redis/Celery на бесплатном плане нет — уведомления по почте не уйдут, остальное работает.
 
 
