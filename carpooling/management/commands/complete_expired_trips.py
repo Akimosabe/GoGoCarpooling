@@ -5,12 +5,12 @@ Management command для автоматического завершения п
     python manage.py complete_expired_trips
 
 Рекомендуется запускать через cron или планировщик задач:
-    # Каждую минуту (рекомендуется)
+    # Каждую минуту (оптимальный интервал)
     * * * * * cd /path/to/project && python manage.py complete_expired_trips
     
     # Или через celery beat
     
-    # Windows Task Scheduler: создать задачу с триггером "каждую минуту"
+    # Windows Task Scheduler: задача с триггером "каждую минуту"
 
 Нагрузка:
     Запрос очень лёгкий (~1-5ms), использует индекс по status и departure_datetime.

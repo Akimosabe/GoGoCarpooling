@@ -16,7 +16,7 @@ from django.core.management.base import BaseCommand
 
 from carpooling.models import CarCatalog
 
-# Файл в корне проекта (рядом с manage.py)
+# Путь к CSV: корень проекта (рядом с manage.py)
 CSV_PATH = Path(settings.BASE_DIR) / "popular_cars_russia_150.csv"
 
 

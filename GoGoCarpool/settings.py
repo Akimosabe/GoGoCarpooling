@@ -88,8 +88,8 @@ WSGI_APPLICATION = "GoGoCarpool.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# PostgreSQL: задайте DJANGO_DB_NAME, DJANGO_DB_USER, DJANGO_DB_PASSWORD в hiddensettings.env
-# Если переменные не заданы — используется SQLite (для разработки без установки PostgreSQL).
+# PostgreSQL: переменные DJANGO_DB_NAME, DJANGO_DB_USER, DJANGO_DB_PASSWORD из hiddensettings.env.
+# Если не заданы — используется SQLite.
 
 _db_name = os.environ.get("DJANGO_DB_NAME")
 _db_user = os.environ.get("DJANGO_DB_USER")
@@ -167,8 +167,8 @@ DATETIME_INPUT_FORMATS = [
 
 
 # Email settings (Yandex SMTP)
-# В разработке: задайте EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend в .env,
-# чтобы письма (в т.ч. восстановление пароля) выводились в терминал Django, а не отправлялись.
+# В разработке: EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend 
+# В .env письма выводятся в терминал Django вместо отправки.
 EMAIL_BACKEND = os.environ.get(
     'EMAIL_BACKEND',
     'django.core.mail.backends.smtp.EmailBackend'
