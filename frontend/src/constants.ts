@@ -1,5 +1,5 @@
-/** URL фона для главной и страницы входа */
-export const HERO_BG_URL = '/hero-road.jpg'
+/** URL фона для главной и страницы входа (BASE_URL в проде = /static/) */
+export const HERO_BG_URL = `${import.meta.env.BASE_URL}hero-road.jpg`
 
 /** Частые цвета авто для выпадающего списка (название + hex для кружка) */
 export const CAR_COLORS = [

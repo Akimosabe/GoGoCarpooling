@@ -4,9 +4,22 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 // https://vite.dev/config/
+const isProd = process.env.NODE_ENV === 'production'
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/static/' : '/',
-  plugins: [react(), tailwindcss()],
+  base: isProd ? '/static/' : '/',
+  plugins: [
+    react(),
+    tailwindcss(),
+    // В проде статика по /static/; в index.html правим только public-ассеты (favicon, preload)
+    isProd && {
+      name: 'html-static-paths',
+      transformIndexHtml(html: string) {
+        return html
+          .replace('href="/vite.svg"', 'href="/static/vite.svg"')
+          .replace('href="/hero-road.jpg"', 'href="/static/hero-road.jpg"')
+      },
+    },
+  ].filter(Boolean),
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
