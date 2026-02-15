@@ -28,3 +28,6 @@ Thumbs.db
 # Environment variables (secrets)
 .env
 hiddensettings.env
+
+# Documents
+docs/

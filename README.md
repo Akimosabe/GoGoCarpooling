@@ -50,10 +50,75 @@
 
 | Часть | Стек |
 |-------|------|
-| **Backend** | Python 3.12, Django 6, Django REST Framework, JWT-аутентификация, Celery, Redis, PostgreSQL |
+| **Backend** | Python 3.12, Django 6, Django REST Framework, JWT-аутентификация, Celery, Redis, PostgreSQL; используется встроенная **админ-панель Django** |
 | **Frontend** | React 19, TypeScript, Vite 7, React Router, Tailwind CSS 4, Lucide React |
 
-Подробнее: структура API, модели и настройки — в коде; полная инструкция по установке и запуску — в [docs/INSTALL.md](docs/INSTALL.md).
+**При запуске:** фронтенд (сайт) — **http://localhost:5173/**; бэкенд (API + админка Django) — **http://localhost:8000/** (админка: http://localhost:8000/admin/).
+
+---
+
+## Структура проекта
+
+```
+GoGoCarpooling/
+├── carpooling/          # Django-приложение (модели, API, задачи)
+├── frontend/            # React SPA (Vite)
+│   ├── src/
+│   │   ├── pages/
+│   │   ├── components/
+│   │   ├── api/
+│   │   └── contexts/
+│   └── package.json
+├── GoGoCarpool/         # Настройки Django
+├── manage.py
+└── requirements.txt
+```
+
+---
+
+## API
+
+Base URL: `http://localhost:8000/api/`
+
+| Метод | Эндпоинт | Описание |
+|-------|----------|----------|
+| GET, POST | `/api/auth/` | Регистрация, вход |
+| GET | `/api/auth/me/` | Текущий пользователь |
+| GET | `/api/trips/` | Список поездок (поиск) |
+| GET | `/api/trips/<id>/` | Детали поездки |
+| POST | `/api/trips/create/` | Создание поездки |
+| GET | `/api/my-trips/` | Мои поездки |
+| POST | `/api/trips/<id>/book/` | Бронирование места |
+| GET | `/api/my-bookings/` | Мои бронирования |
+| GET | `/api/users/<id>/profile/` | Профиль пользователя |
+| GET | `/api/cities/`, `/api/cities/autocomplete/` | Города |
+| GET, POST | `/api/notifications/` | Уведомления |
+
+---
+
+## Установка (кратко)
+
+1. **Требования:** Python 3.12, Node.js 18+, при необходимости Redis.
+2. **Backend:** в корне проекта — `py -3.12 -m venv venv`, активировать venv, `pip install -r requirements.txt`, `python manage.py migrate`.
+3. **Frontend:** `cd frontend`, `npm install`.
+4. **Секреты:** в корне создать `hiddensettings.env`.
+
+Пример содержимого:
+
+```env
+DJANGO_SECRET_KEY=ключ
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Yandex SMTP: пароль — пароль приложения
+EMAIL_HOST=smtp.yandex.ru
+EMAIL_PORT=587
+EMAIL_HOST_USER=email@yandex.com
+EMAIL_HOST_PASSWORD=пароль
+
+REDIS_URL=redis://localhost:6379/0
+```
+5. **Запуск:** Redis (если нужен) → `python manage.py runserver` → в другом терминале `cd frontend && npm run dev`. Сайт: http://localhost:5173/, API: http://127.0.0.1:8000/.
 
 ---
 
@@ -66,13 +131,4 @@ cd C:\Projects\GoGoCarpooling
 .\start-all.ps1
 ```
 
----
-
-## Установка (кратко)
-
-1. **Требования:** Python 3.12, Node.js 18+, при необходимости Redis.
-2. **Backend:** в корне проекта — `py -3.12 -m venv venv`, активировать venv, `pip install -r requirements.txt`, `python manage.py migrate`.
-3. **Frontend:** `cd frontend`, `npm install`.
-4. **Секреты:** в корне создать `hiddensettings.env` (см. пример в [docs/INSTALL.md](docs/INSTALL.md)).
-5. **Запуск:** Redis (если нужен) → `python manage.py runserver` → в другом терминале `cd frontend && npm run dev`. Сайт: http://localhost:5173/, API: http://127.0.0.1:8000/.
 
