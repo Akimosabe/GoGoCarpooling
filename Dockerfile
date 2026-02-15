@@ -21,4 +21,5 @@ COPY --from=frontend /app/frontend/dist ./frontend/dist
 RUN python manage.py collectstatic --noinput
 
 EXPOSE 10000
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn GoGoCarpool.wsgi --bind 0.0.0.0:$PORT --workers 1 --threads 2"]
+# Без Shell на Render: миграции, города из seed, суперпользователь из env (если заданы), затем gunicorn
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_cities && if [ -n \"$DJANGO_SUPERUSER_EMAIL\" ]; then python manage.py createsuperuser --noinput 2>/dev/null || true; fi && exec gunicorn GoGoCarpool.wsgi --bind 0.0.0.0:$PORT --workers 1 --threads 2"]
