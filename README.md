@@ -118,13 +118,7 @@ EMAIL_HOST_PASSWORD=пароль
 
 REDIS_URL=redis://localhost:6379/0
 ```
-5. **Запуск:** Redis (если нужен) → `python manage.py runserver` → в другом терминале `cd frontend && npm run dev`. Сайт: http://localhost:5173/, API: http://127.0.0.1:8000/.
-
----
-
-### Запуск локально
-
-В корне проекта лежит скрипт **`start-all.ps1`**. Он по очереди открывает четыре окна PowerShell и запускает в них Redis, Django, Frontend и Celery. Запускать из корня проекта:
+5. **Запуск локально:** В корне проекта лежит скрипт **`start-all.ps1`**. Он по очереди открывает четыре окна PowerShell и запускает в них Redis, Django, Frontend и Celery. Запускать из корня проекта:
 
 ```powershell
 cd C:\Projects\GoGoCarpooling
