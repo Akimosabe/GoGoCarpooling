@@ -146,6 +146,5 @@ urlpatterns += [
     re_path(r"^(?!api/|admin/|static/|media/).*$", serve_spa),
 ]
 
-# Медиа в режиме разработки
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Медиа (загруженные файлы): раздаём и в проде, чтобы /media/... отдавал картинки
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
