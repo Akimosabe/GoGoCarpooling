@@ -142,7 +142,7 @@ export function SearchResults() {
   useEffect(() => {
     setLoading(true)
     setError('')
-    const q: Record<string, string | number> = { page }
+    const q: Record<string, string | number | boolean> = { page }
     if (originIdParam) q.origin_id = originIdParam
     else if (originParam) q.origin = originParam
     if (destinationIdParam) q.destination_id = destinationIdParam

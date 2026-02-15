@@ -9,11 +9,11 @@ interface ColorSelectProps {
   id?: string
 }
 
-export function ColorSelect({ value, onChange, required, id }: ColorSelectProps) {
+export function ColorSelect({ value, onChange, required: _required, id }: ColorSelectProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  const options = [...CAR_COLORS]
+  const options: { name: string; hex: string }[] = [...CAR_COLORS]
   const currentInList = CAR_COLORS.find((c) => c.name === value)
   if (value && !currentInList) {
     options.unshift({ name: value, hex: '#9ca3af' })
@@ -27,7 +27,7 @@ export function ColorSelect({ value, onChange, required, id }: ColorSelectProps)
     return () => document.removeEventListener('click', close)
   }, [])
 
-  const displayHex = currentInList?.hex ?? (value ? '#9ca3af' : undefined)
+  const displayHex: string | undefined = currentInList?.hex ?? (value ? '#9ca3af' : undefined)
 
   return (
     <div ref={ref} className="relative" id={id}>

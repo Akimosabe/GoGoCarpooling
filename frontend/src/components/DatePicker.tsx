@@ -57,7 +57,7 @@ export function DatePicker({
   max,
   placeholder = 'Выберите дату',
   className,
-  required,
+  required: _required,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const [viewYear, setViewYear] = useState(() => {

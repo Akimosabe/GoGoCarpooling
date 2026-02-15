@@ -12,7 +12,7 @@ import {
 } from '@/api'
 import type { User as UserType, Trip, Booking } from '@/api/types'
 import { TripOptionIcons } from '@/components/TripOptionIcons'
-import { formatDate, formatTripDeparture, getAvatarUrl } from '@/lib/utils'
+import { formatTripDeparture, getAvatarUrl } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
