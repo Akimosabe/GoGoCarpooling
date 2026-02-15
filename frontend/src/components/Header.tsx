@@ -52,16 +52,16 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
-      <Link to="/" className="flex items-center gap-2 text-xl font-bold text-green-600">
+    <header className="sticky top-0 z-40 flex min-h-0 items-center justify-between gap-2 border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur sm:gap-4 sm:px-6 sm:py-3">
+      <Link to="/" className="shrink-0 text-lg font-bold text-green-600 sm:text-xl">
         GoGo
       </Link>
 
-      <nav className="flex items-center gap-2 sm:gap-4">
-        <Link to="/trips/create">
-          <Button variant="primary" size="sm" className="gap-1.5">
-            <Car className="h-4 w-4" />
-            Создать поездку
+      <nav className="flex min-w-0 shrink items-center gap-1 sm:gap-4">
+        <Link to="/trips/create" className="shrink-0" aria-label="Создать поездку">
+          <Button variant="primary" size="sm" className="gap-1.5 px-2.5 py-1.5 sm:px-3">
+            <Car className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Создать поездку</span>
           </Button>
         </Link>
 
@@ -138,18 +138,18 @@ export function Header() {
               )}
             </div>
 
-            <Link to="/profile">
-              <Button variant="ghost" size="sm" className="gap-1.5">
+            <Link to="/profile" className="shrink-0" aria-label="Профиль">
+              <Button variant="ghost" size="sm" className="gap-1.5 px-2 sm:px-3">
                 {getAvatarUrl(user.avatar) ? (
                   <img
                     src={getAvatarUrl(user.avatar)!}
                     alt=""
-                    className="h-6 w-6 rounded-full object-cover"
+                    className="h-6 w-6 shrink-0 rounded-full object-cover"
                   />
                 ) : (
-                  <User className="h-5 w-5" />
+                  <User className="h-5 w-5 shrink-0" />
                 )}
-                {user.first_name || 'Профиль'}
+                <span className="hidden sm:inline">{user.first_name || 'Профиль'}</span>
               </Button>
             </Link>
           </>
