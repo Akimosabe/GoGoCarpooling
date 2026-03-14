@@ -153,7 +153,7 @@ test.describe('Требования одновременности 1.4.2.3', () 
     await Promise.all([
       (async () => {
         await login(bookingPage, USER_1.email, USER_1.password)
-        await ensureBookedOneSeat(bookingPage, 195)
+        await ensureBookedOneSeat(bookingPage, 33) // ПОКА НЕ ПРИДУМАЛ КАК МЕНЯТЬ АВТОМАТОМ, ТУТ ТАК-ТО НЕЛЬЗЯ ОДИН РАЗ БРОНИРОВАТЬСЯ В ОДНУ И ТУ ЖЕ
       })(),
       ensureSearchPageLoaded(searchPage, SEARCH_URL_STATIC),
     ])
