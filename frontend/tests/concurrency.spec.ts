@@ -2,12 +2,12 @@ import { expect, test, type Browser, type BrowserContext, type Page } from '@pla
 
 const BASE_URL = 'http://localhost:5173'
 const USER_1 = {
-  email: 'akimosabe@yandex.ru',
-  password: '3101Akim!',
+  email: 'SECRET',
+  password: 'SECRET',
 }
 const USER_2 = {
-  email: 'akimo7abe@gmail.com',
-  password: '3101Akim!',
+  email: 'SECRET',
+  password: 'SECRET',
 }
 const SEARCH_URL_STATIC =
   '/search?origin_id=1080&origin=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0%2C+%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0&destination_id=664&destination=%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3%2C+%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3&date=2026-03-30&page=1'
